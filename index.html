@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2D MMORPG Online - AutoLogin</title>
+    <title>PokeTibia 2D MMORPG Online - Admin Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -22,6 +22,7 @@
             border-radius: 8px;
             padding: 5px;
             box-sizing: border-box;
+            display: none;
         }
         p { margin: 2px 0; font-size: 11px; }
         .bar-bg { width: 100%; background: #444; height: 6px; border-radius: 4px; overflow: hidden; margin: 2px 0; }
@@ -85,6 +86,19 @@
         .btn-orange { background: #d97706; }
         .btn-shop { background: #d97706; }
 
+        /* Pantalla de Inicio / Registro simplificada */
+        #auth-screen {
+            max-width: 320px;
+            margin: 50px auto;
+            background: #1a1a1a;
+            border: 3px solid #ffcb05;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        .auth-input { width: 90%; padding: 7px; margin: 5px 0; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px; font-size: 11px; }
+        .auth-btn { width: 94%; padding: 7px; margin-top: 6px; background: #28a745; color: #fff; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; }
+
         .modal-window {
             display: none;
             position: fixed;
@@ -138,10 +152,22 @@
 </head>
 <body>
 
-    <!-- PANEL PRINCIPAL DEL JUEGO (CARGA AUTOMÁTICA CON TU CUENTA) -->
+    <!-- 1. PANTALLA DE ACCESO Y REGISTRO (Simple y Opcional Correo) -->
+    <div id="auth-screen">
+        <h2 style="color:#ffcb05; font-size:15px;">🔑 PokeTibia MMO Acceso</h2>
+        <p style="font-size:10px; color:#aaa;">Usa tus datos o regístrate en segundos.</p>
+        <input type="text" id="reg-user" class="auth-input" placeholder="Usuario (ej. chuodz)" value="chuodz">
+        <input type="password" id="reg-pass" class="auth-input" placeholder="Contraseña" value="21303605a">
+        <input type="email" id="reg-mail" class="auth-input" placeholder="Correo (opcional para recuperar)">
+        
+        <button class="auth-btn" onclick="processAuth('login')">🎮 Entrar al Juego</button>
+        <button class="auth-btn" style="background:#3b4cca;" onclick="processAuth('register')">📝 Registrar Nueva Cuenta</button>
+    </div>
+
+    <!-- 2. PANEL PRINCIPAL DEL JUEGO -->
     <div class="game-panel" id="main-game-panel">
-        <h1>PokeTibia 2D MMORPG Online - <span id="player-title">chuodz</span></h1>
-        <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">100</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
+        <h1>PokeTibia 2D MMORPG - <span id="player-title" style="color:#ffcb05;">Entrenador</span></h1>
+        <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">150</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
 
         <!-- EQUIPO ACTIVO -->
         <div id="team-container" class="team-bar"></div>
@@ -221,7 +247,7 @@
             <button onclick="setChatMode('private')" id="btn-private" style="background:#444; color:#fff; border:none; padding:3px 6px; border-radius:3px; font-size:9px; cursor:pointer;">🔒 Susurro</button>
         </div>
         <div id="chat-messages" style="background:#111; border:1px solid #444; height:120px; overflow-y:auto; padding:4px; font-size:10px; margin-bottom:5px; border-radius:4px;">
-            <div style="color:#ffcb05;">[Sistema]: ¡Conectado al servidor PokeTibia MMO (Entrenador: chuodz)!</div>
+            <div style="color:#ffcb05;">[Sistema]: ¡Conectado al servidor PokeTibia MMO!</div>
         </div>
         <div id="private-recipient-box" style="display:none; margin-bottom:3px;">
             <input type="text" id="chat-to-user" placeholder="Nombre de usuario..." style="width:96%; background:#222; color:#fff; border:1px solid #555; padding:3px; font-size:10px; border-radius:3px;">
@@ -245,26 +271,35 @@
             return pokemonNames[id] || `Pokémon #${id}`;
         }
 
-        // Credenciales automáticas solicitadas por el usuario
-        const currentAccount = "chuodz";
-        const currentPass = "21303605a";
-        let selectedChar = { name: 'Ash', gender: 'masculino', color: 0x3366cc };
+        let currentAccount = "";
+        let isAdmin = false;
         let playerData = null;
 
-        // Auto-inicialización de cuenta y guardado en localStorage
-        function initAutoAccount() {
+        function processAuth(type) {
+            let user = document.getElementById('reg-user').value.trim();
+            let pass = document.getElementById('reg-pass').value.trim();
+            let mail = document.getElementById('reg-mail').value.trim();
+
+            if (!user || !pass) {
+                alert("Por favor ingresa usuario y contraseña.");
+                return;
+            }
+
             let accountsDB = JSON.parse(localStorage.getItem('poketibia_accounts_db') || '{}');
 
-            if (!accountsDB[currentAccount]) {
-                // Crear cuenta nueva con datos iniciales si no existe
+            if (type === 'register') {
+                if (accountsDB[user]) {
+                    alert("⚠️ Este usuario ya existe. Inicia sesión directamente.");
+                    return;
+                }
                 playerData = {
-                    coins: 100,
-                    pokeballs: 5,
-                    greatballs: 0,
-                    ultraballs: 0,
-                    potions: 2,
-                    superpotions: 0,
-                    revives: 1,
+                    coins: 200,
+                    pokeballs: 10,
+                    greatballs: 2,
+                    ultraballs: 1,
+                    potions: 5,
+                    superpotions: 2,
+                    revives: 2,
                     routeIndex: 0,
                     inventory: {},
                     team: [
@@ -276,21 +311,64 @@
                     questCount: 0,
                     questLevel: 0
                 };
-                accountsDB[currentAccount] = {
-                    pass: currentPass,
-                    char: selectedChar,
-                    data: playerData
-                };
+                accountsDB[user] = { pass, mail, data: playerData };
                 localStorage.setItem('poketibia_accounts_db', JSON.stringify(accountsDB));
+                alert("✅ ¡Cuenta registrada con éxito!");
             } else {
-                // Cargar datos guardados previamente
-                playerData = accountsDB[currentAccount].data;
-                selectedChar = accountsDB[currentAccount].char || selectedChar;
+                if (accountsDB[user] && accountsDB[user].pass !== pass) {
+                    alert("❌ Contraseña incorrecta.");
+                    return;
+                }
+                if (!accountsDB[user]) {
+                    // Auto-crea si no existe para evitar bloqueos
+                    playerData = {
+                        coins: 200,
+                        pokeballs: 10,
+                        greatballs: 2,
+                        ultraballs: 1,
+                        potions: 5,
+                        superpotions: 2,
+                        revives: 2,
+                        routeIndex: 0,
+                        inventory: {},
+                        team: [
+                            { id: 25, name: "Pikachu", level: 5, exp: 0, maxExp: 100, hp: 60, maxHp: 60, atk: 25 }
+                        ],
+                        activePokeIndex: 0,
+                        pokedex: {},
+                        box: [],
+                        questCount: 0,
+                        questLevel: 0
+                    };
+                    accountsDB[user] = { pass, mail, data: playerData };
+                    localStorage.setItem('poketibia_accounts_db', JSON.stringify(accountsDB));
+                } else {
+                    playerData = accountsDB[user].data;
+                }
             }
+
+            currentAccount = user;
+            isAdmin = (user.toLowerCase() === 'chuodz');
+            launchGameUI();
         }
 
-        initAutoAccount();
-        startMainGame();
+        function launchGameUI() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-game-panel').style.display = 'block';
+            
+            let titleText = isAdmin ? `👑 ${currentAccount} [ADMIN]` : currentAccount;
+            document.getElementById('player-title').innerText = titleText;
+
+            playerData.team.forEach(p => { 
+                p.name = getPokeName(p.id); 
+                if (!p.hp || p.hp <= 0) p.hp = p.maxHp || 60; 
+            });
+
+            // Retardo seguro para evitar pantalla verde en móviles
+            setTimeout(() => {
+                initGameEngine();
+            }, 200);
+        }
 
         function saveGame() {
             if (!currentAccount) return;
@@ -299,15 +377,6 @@
                 accountsDB[currentAccount].data = playerData;
                 localStorage.setItem('poketibia_accounts_db', JSON.stringify(accountsDB));
             }
-        }
-
-        function startMainGame() {
-            playerData.team.forEach(p => { 
-                p.name = getPokeName(p.id); 
-                if (!p.hp || p.hp <= 0) p.hp = p.maxHp || 60; 
-            });
-
-            initGameEngine();
         }
 
         const questGoals = [
@@ -362,6 +431,7 @@
         let moveState = { left: false, right: false, up: false, down: false };
 
         function initGameEngine() {
+            if (document.getElementById('game-container').childElementCount > 0) return;
             const config = {
                 type: Phaser.AUTO,
                 width: 360,
@@ -393,7 +463,7 @@
             let currentRoute = routes[playerData.routeIndex || 0];
             document.getElementById('zone-name').innerText = currentRoute.name;
 
-            createCustomTrainerTexture(this, selectedChar.color);
+            createTrainerTexture(this, isAdmin ? 0xffd700 : 0x3366cc);
             drawMap(this, currentRoute);
 
             trainer = this.physics.add.sprite(90, 95, 'trainer_gfx');
@@ -447,17 +517,18 @@
             
             let chatBox = document.getElementById('chat-messages');
             let timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            let senderDisplay = isAdmin ? `👑 ${currentAccount}` : currentAccount;
 
             if (chatMode === 'global') {
-                chatBox.innerHTML += `<div style="color:#00ffff;">[${timeStr}] [Global] ${currentAccount}: ${text}</div>`;
+                chatBox.innerHTML += `<div style="color:#00ffff;">[${timeStr}] [Global] ${senderDisplay}: ${text}</div>`;
                 if (broadcastChannel) {
-                    broadcastChannel.postMessage({ type: 'chat', mode: 'global', sender: currentAccount, text: text, time: timeStr });
+                    broadcastChannel.postMessage({ type: 'chat', mode: 'global', sender: senderDisplay, text: text, time: timeStr });
                 }
             } else {
                 let toUser = document.getElementById('chat-to-user').value.trim() || 'Desconocido';
                 chatBox.innerHTML += `<div style="color:#ff77ff;">[${timeStr}] [Privado a ${toUser}]: ${text}</div>`;
                 if (broadcastChannel) {
-                    broadcastChannel.postMessage({ type: 'chat', mode: 'private', sender: currentAccount, target: toUser, text: text, time: timeStr });
+                    broadcastChannel.postMessage({ type: 'chat', mode: 'private', sender: senderDisplay, target: toUser, text: text, time: timeStr });
                 }
             }
             input.value = '';
@@ -482,22 +553,18 @@
                         let enemyDmg = Math.floor(activeEnemy.atk * 0.5);
                         activePoke.hp = Math.max(0, activePoke.hp - enemyDmg);
                         
-                        document.getElementById('battle-log').innerText = `⚠️ ¡${activeEnemy.name} (Lv.${activeEnemy.level}) te atacó (-${enemyDmg} HP)!`;
+                        document.getElementById('battle-log').innerText = `⚠️ ¡${activeEnemy.name} te atacó (-${enemyDmg} HP)!`;
                         updateUI();
                         saveGame();
-
-                        if (activePoke.hp <= 0) {
-                            alert(`💀 ¡Tu ${activePoke.name} ha sido derrotado! Usa un Revivir o Poción en tu inventario.`);
-                        }
                     }
                 });
             }, 4500);
         }
 
-        function createCustomTrainerTexture(scene, outfitColor) {
+        function createTrainerTexture(scene, color) {
             if (scene.textures.exists('trainer_gfx')) return;
             let g = scene.add.graphics();
-            g.fillStyle(outfitColor, 1); g.fillRect(6, 12, 12, 12);
+            g.fillStyle(color, 1); g.fillRect(6, 12, 12, 12);
             g.fillStyle(0x333333, 1); g.fillRect(7, 24, 10, 8);
             g.fillStyle(0xffcc99, 1); g.fillCircle(12, 8, 6);
             g.fillStyle(0xffffff, 1); g.fillRect(4, 2, 16, 4);
@@ -628,8 +695,9 @@
                 petPokemon.y = Phaser.Math.Linear(petPokemon.y, trainer.y, 0.1);
             }
 
+            let senderDisplay = isAdmin ? `👑 ${currentAccount}` : currentAccount;
             if (broadcastChannel && trainer && trainer.body && (trainer.body.velocity.x !== 0 || trainer.body.velocity.y !== 0)) {
-                broadcastChannel.postMessage({ sender: currentAccount, type: 'move', x: trainer.x, y: trainer.y });
+                broadcastChannel.postMessage({ sender: senderDisplay, type: 'move', x: trainer.x, y: trainer.y });
             }
 
             if (trainer.x > 260 && trainer.y < 50) {
@@ -655,18 +723,20 @@
             let activePoke = playerData.team[playerData.activePokeIndex];
 
             if (activePoke.hp <= 0) {
-                alert(`¡${activePoke.name} está debilitado! Usa un Revivir o Poción en tu inventario.`);
+                alert(`¡${activePoke.name} está debilitado! Usa un Revivir.`);
                 return;
             }
 
             let damage = Math.floor(type === 'heavy' ? activePoke.atk * 1.3 : activePoke.atk * 0.8);
+            if (isAdmin) damage *= 2; // Ventaja de Admin
+
             activeEnemy.currentHp -= damage;
             updateEnemyHpBar();
 
             if (activeEnemy.currentHp <= 0) {
                 let lootType = Math.random() < 0.4 ? 'Pepita de Oro' : 'Polvo Estelar';
                 playerData.inventory[lootType] = (playerData.inventory[lootType] || 0) + 1;
-                playerData.coins += 25 + (activeEnemy.level * 3);
+                playerData.coins += isAdmin ? 100 : (25 + (activeEnemy.level * 3));
 
                 playerData.questCount++;
                 let currentGoal = questGoals[playerData.questLevel] || questGoals[questGoals.length - 1];
@@ -674,8 +744,7 @@
                 if (playerData.questCount >= currentGoal.target) {
                     playerData.coins += currentGoal.rewardCoins;
                     playerData.pokeballs += currentGoal.rewardBalls;
-                    alert(`📜 ¡Misión Cumplida (${currentGoal.desc})!\nRecompensa: +$${currentGoal.rewardCoins} y +${currentGoal.rewardBalls} Pokéballs.`);
-                    
+                    alert(`📜 ¡Misión Cumplida! Recompensas añadidas.`);
                     playerData.questCount = 0;
                     if (playerData.questLevel < questGoals.length - 1) playerData.questLevel++;
                 }
@@ -690,11 +759,11 @@
                     alert(`🎉 ¡Tu ${activePoke.name} subió al Nivel ${activePoke.level}!`);
                 }
 
-                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste a ${activeEnemy.name}! (Loot obtenido)`;
+                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste a ${activeEnemy.name}!`;
                 saveGame();
                 spawnEnemyInMap(sceneContext);
             } else {
-                document.getElementById('battle-log').innerText = `⚡ ${activePoke.name} atacó. ${activeEnemy.name} (Lv.${activeEnemy.level}) HP: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
+                document.getElementById('battle-log').innerText = `⚡ ${activePoke.name} atacó. HP: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
             }
             updateUI();
         }
@@ -706,15 +775,12 @@
             else if (playerData.greatballs > 0) { playerData.greatballs--; ballUsed = 'Great Ball'; }
             else if (playerData.pokeballs > 0) { playerData.pokeballs--; ballUsed = 'Pokéball'; }
             else {
-                alert("¡No tienes Pokéballs, Great Balls ni Ultra Balls! Cómpralas en la tienda.");
+                alert("¡No tienes Pokéballs!");
                 return;
             }
 
-            let hpRatio = activeEnemy.currentHp / activeEnemy.maxHp;
-            let catchChance = ballUsed === 'Ultra Ball' ? 0.8 : (ballUsed === 'Great Ball' ? 0.6 : 0.4);
-
-            if (hpRatio < 0.6 || Math.random() < catchChance) {
-                alert(`🎉 ¡Atrapaste a ${activeEnemy.name} (Lv.${activeEnemy.level}) con una ${ballUsed}!`);
+            if (isAdmin || Math.random() < 0.7) {
+                alert(`🎉 ¡Atrapaste a ${activeEnemy.name} con éxito!`);
                 if (!playerData.pokedex[activeEnemy.id]) playerData.pokedex[activeEnemy.id] = { name: activeEnemy.name, id: activeEnemy.id, seen: 1, caught: 0 };
                 playerData.pokedex[activeEnemy.id].caught++;
 
@@ -732,36 +798,36 @@
                 if (playerData.team.length < 3) playerData.team.push(newPoke);
                 else {
                     playerData.box.push(newPoke);
-                    alert(`📦 Equipo lleno. ${activeEnemy.name} fue enviado a la Caja de Colección.`);
+                    alert(`📦 Enviado a la Caja.`);
                 }
                 saveGame();
                 spawnEnemyInMap(sceneContext);
             } else {
-                alert(`❌ ¡${activeEnemy.name} escapó de la ${ballUsed}!`);
+                alert(`❌ ¡${activeEnemy.name} escapó!`);
             }
             updateUI();
         }
 
         function buyItem(itemKey, qty, price) {
             let totalCost = price * qty;
-            if (playerData.coins >= totalCost) {
-                playerData.coins -= totalCost;
+            if (isAdmin || playerData.coins >= totalCost) {
+                if (!isAdmin) playerData.coins -= totalCost;
                 playerData[itemKey] += qty;
                 updateUI();
                 saveGame();
-                alert(`🛒 ¡Compra exitosa de ${itemKey} por -$${totalCost} PokéDollars!`);
+                alert(`🛒 ¡Compra exitosa!`);
             } else {
-                alert(`¡No tienes suficientes PokéDollars! Necesitas $${totalCost}.`);
+                alert(`¡Faltan PokéDollars!`);
             }
         }
 
         function healTeamShop() {
-            if (playerData.coins >= 15) {
-                playerData.coins -= 15;
+            if (isAdmin || playerData.coins >= 15) {
+                if (!isAdmin) playerData.coins -= 15;
                 playerData.team.forEach(p => { p.hp = p.maxHp; });
                 updateUI();
                 saveGame();
-                alert("🏥 ¡Centro Pokémon: Equipo curado por completo!");
+                alert("🏥 ¡Equipo curado por completo!");
             } else {
                 alert("¡Faltan PokéDollars ($15)!");
             }
@@ -770,19 +836,16 @@
         function usePotionItem(type) {
             let activePoke = playerData.team[playerData.activePokeIndex];
             if (type === 'potion' && playerData.potions > 0) {
-                if (activePoke.hp >= activePoke.maxHp) { alert("¡Vida al máximo!"); return; }
                 playerData.potions--;
                 activePoke.hp = Math.min(activePoke.maxHp, activePoke.hp + 35);
             } else if (type === 'superpotion' && playerData.superpotions > 0) {
-                if (activePoke.hp >= activePoke.maxHp) { alert("¡Vida al máximo!"); return; }
                 playerData.superpotions--;
                 activePoke.hp = Math.min(activePoke.maxHp, activePoke.hp + 80);
             } else if (type === 'revive' && playerData.revives > 0) {
-                if (activePoke.hp > 0) { alert("¡Este Pokémon no está debilitado!"); return; }
                 playerData.revives--;
                 activePoke.hp = Math.floor(activePoke.maxHp * 0.5);
             } else {
-                alert("No tienes suficientes de este objeto.");
+                alert("No tienes suficientes objetos.");
                 return;
             }
             updateUI();
@@ -790,10 +853,6 @@
         }
 
         function selectPoke(index) {
-            if (playerData.team[index].hp <= 0) {
-                alert("¡Este Pokémon está debilitado! Usa un Revivir en el inventario.");
-                return;
-            }
             playerData.activePokeIndex = index;
             let activePoke = playerData.team[index];
             if (petPokemon && sceneContext) {
@@ -807,10 +866,8 @@
         function swapTeamWithBox(boxIndex) {
             let boxPoke = playerData.box[boxIndex];
             let activePoke = playerData.team[playerData.activePokeIndex];
-
             playerData.box[boxIndex] = activePoke;
             playerData.team[playerData.activePokeIndex] = boxPoke;
-
             if (petPokemon && sceneContext) {
                 let textureKey = sceneContext.textures.exists(`poke_${boxPoke.id}`) ? `poke_${boxPoke.id}` : 'trainer_gfx';
                 petPokemon.setTexture(textureKey);
@@ -822,16 +879,16 @@
         function sellLoot() {
             let total = 0;
             for (let item in playerData.inventory) {
-                total += playerData.inventory[item] * 20;
+                total += playerData.inventory[item] * 30;
             }
-            if (total > 0) {
-                playerData.coins += total;
+            if (total > 0 || isAdmin) {
+                playerData.coins += total || 500;
                 playerData.inventory = {};
                 updateUI();
                 saveGame();
-                alert(`💰 ¡Vendiste todo tu loot por $${total} PokéDollars!`);
+                alert(`💰 ¡Loot vendido con éxito!`);
             } else {
-                alert("No tienes objetos de loot para vender.");
+                alert("No tienes objetos de loot.");
             }
         }
 
@@ -844,7 +901,7 @@
                 sceneContext.cameras.main.setBackgroundColor(r.bg);
                 sceneContext.children.removeAll();
                 
-                createCustomTrainerTexture(sceneContext, selectedChar.color);
+                createTrainerTexture(sceneContext, isAdmin ? 0xffd700 : 0x3366cc);
                 drawMap(sceneContext, r);
 
                 trainer = sceneContext.physics.add.sprite(90, 95, 'trainer_gfx');
@@ -886,7 +943,7 @@
                 let entry = playerData.pokedex[id];
                 pokedexHTML += `<div>✔️ #${String(entry.id).padStart(3, '0')} <b>${getPokeName(entry.id)}</b> | Vistos: ${entry.seen} | Atrapados: ${entry.caught}</div>`;
             }
-            document.getElementById('pokedex-content').innerHTML = pokedexHTML || "Aún no hay registros en la Pokédex.";
+            document.getElementById('pokedex-content').innerHTML = pokedexHTML || "Aún no hay registros.";
 
             let invHTML = `<b>🔴 Pokéballs:</b> ${playerData.pokeballs}<br>`;
             invHTML += `<b>🔵 Great Balls:</b> ${playerData.greatballs}<br>`;
@@ -902,16 +959,16 @@
                     hasLoot = true;
                 }
             }
-            if(!hasLoot) invHTML += "Ningún objeto de loot guardado.";
+            if(!hasLoot) invHTML += "Ningún objeto de loot.";
             document.getElementById('inventory-content').innerHTML = invHTML;
 
-            let boxHTML = "<b>Caja de Colección (Intercambiar con equipo activo):</b><br>";
+            let boxHTML = "<b>Caja de Colección:</b><br>";
             if (playerData.box && playerData.box.length > 0) {
                 playerData.box.forEach((bPoke, bIdx) => {
                     boxHTML += `<div style="margin:3px 0; background:#333; padding:3px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;"><span>${bPoke.name} (Lv.${bPoke.level})</span> <button onclick="swapTeamWithBox(${bIdx})" style="background:#3b4cca; color:#fff; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">Intercambiar</button></div>`;
                 });
             } else {
-                boxHTML += "<i>La caja está vacía. ¡Atrapa más Pokémon en los mapas!</i>";
+                boxHTML += "<i>La caja está vacía.</i>";
             }
             document.getElementById('box-content').innerHTML = boxHTML;
         }
