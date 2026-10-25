@@ -1,31 +1,282 @@
-// Tus Pokémon disponibles (almacén / Pokédex) y tu equipo activo en batalla
-let playerTeam = [
-    { id: 1, name: "Pikachu", level: 50, active: true },
-    { id: 4, name: "Charmander", level: 6, active: true }
-];
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokeTibia MMO - Interfaz Completa</title>
+    <style>
+        body { background: #121212; color: #fff; font-family: Arial, sans-serif; margin: 0; padding: 10px; }
+        /* Barra Superior / Equipo Activo */
+        .top-bar { display: flex; justify-content: space-around; background: #222; padding: 10px; border-radius: 8px; border: 1px solid #444; }
+        .team-slot { background: #333; padding: 8px; border-radius: 6px; text-align: center; width: 40%; border: 1px solid #555; }
+        
+        /* Botones de Menú Principal */
+        .menu-buttons { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+        .btn-game { background: #ffcc00; color: #000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 5px; cursor: pointer; }
+        .btn-game:hover { background: #e6b800; }
 
-let pcStorage = [
-    { id: 25, name: "Bulbasaur", level: 10, active: false },
-    { id: 37, name: "Vulpix", level: 12, active: false }
-];
+        /* Estilo de Modales (Ventanas Emergentes) */
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; width: 90%; max-width: 400px; padding: 20px; border-radius: 10px; border: 2px solid #ffcc00; z-index: 1000; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 8px; margin-bottom: 10px; }
+        .close-btn { background: #d9534f; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        
+        /* Listas internas */
+        .item-row, .poke-row { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; margin-bottom: 8px; padding: 8px; border-radius: 5px; }
+        .action-btn { background: #4cae4c; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+        .danger-btn { background: #d9534f; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+    </style>
+</head>
+<body>
 
-// Función para cambiar un Pokémon del equipo por uno del almacenamiento
-function swapPokemon(indexInTeam, storageId) {
-    let teamMember = playerTeam[indexInTeam];
-    let storageIndex = pcStorage.findIndex(p => p.id === storageId);
-    
-    if (storageIndex !== -1) {
-        let newMember = pcStorage[storageIndex];
-        
-        // Intercambiar estados
-        teamMember.active = false;
-        newMember.active = true;
-        
-        // Actualizar los arrays
-        pcStorage[storageIndex] = teamMember;
-        playerTeam[indexInTeam] = newMember;
-        
-        console.log(`¡Has cambiado a ${teamMember.name} por ${newMember.name} en tu equipo!`);
-        renderTeamUI(); // Actualiza los cuadros superiores de la pantalla
-    }
-}
+    <!-- BARRA SUPERIOR: EQUIPO ACTIVO -->
+    <div class="top-bar">
+        <div class="team-slot" id="slot-0">Cargando...</div>
+        <div class="team-slot" id="slot-1">Cargando...</div>
+    </div>
+
+    <!-- BOTONES DE ACCIÓN RÁPIDA -->
+    <div class="menu-buttons">
+        <button class="btn-game" onclick="openModal('shopModal')">🛒 PokéMart</button>
+        <button class="btn-game" onclick="openModal('inventoryModal')">🎒 Inventario</button>
+        <button class="btn-game" onclick="openModal('pokedexModal')">📖 Pokédex / Caja</button>
+    </div>
+
+    <!-- VENTANA 1: POKÉMART (TIENDA) -->
+    <div id="shopModal" class="modal">
+        <div class="modal-header">
+            <h3>PokéMart (Tienda Oficial)</h3>
+            <button class="close-btn" onclick="closeModal('shopModal')">X</button>
+        </div>
+        <p>Dinero actual: <span id="playerMoney">5300</span>$</p>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="action-btn" onclick="openInventorySell()">📦 Vender Ítems del Inventario</button>
+            <button class="danger-btn" onclick="openWeakPokemonSell()">🤖 Vender Pokémon Malos (Comunes)</button>
+        </div>
+    </div>
+
+    <!-- VENTANA 2: INVENTARIO (USAR / VENDER) -->
+    <div id="inventoryModal" class="modal">
+        <div class="modal-header">
+            <h3>Inventario de Ítems</h3>
+            <button class="close-btn" onclick="closeModal('inventoryModal')">X</button>
+        </div>
+        <div id="inventoryList" style="max-height:250px; overflow-y:auto;">
+            <!-- Se llena por JavaScript -->
+        </div>
+    </div>
+
+    <!-- VENTANA 3: POKÉDEX / GESTIÓN DE POKÉMON Y CAMBIO DE EQUIPO -->
+    <div id="pokedexModal" class="modal">
+        <div class="modal-header">
+            <h3>Pokédex y Gestión de Caja</h3>
+            <button class="close-btn" onclick="closeModal('pokedexModal')">X</button>
+        </div>
+        <div id="pokedexList" style="max-height:250px; overflow-y:auto;">
+            <!-- Se llena por JavaScript -->
+        </div>
+    </div>
+
+    <!-- VENTANA 4: VENTA DE POKÉMON DÉBILES -->
+    <div id="weakPokemonModal" class="modal">
+        <div class="modal-header">
+            <h3>Venta de Pokémon No Deseados</h3>
+            <button class="close-btn" onclick="closeModal('weakPokemonModal')">X</button>
+        </div>
+        <p>Se venderán automáticamente los Pokémon de rareza <b>Común</b> y <b>Poco Común</b> que no estén protegidos ni en tu equipo activo.</p>
+        <div id="weakPokemonList" style="max-height:150px; overflow-y:auto; margin-bottom: 10px;"></div>
+        <button class="danger-btn" style="width:100%; padding:10px;" onclick="confirmSellWeakPokemon()">Vender Todos los Seleccionados</button>
+    </div>
+
+    <script>
+        // --- DATOS DEL JUEGO ---
+        let playerData = {
+            money: 5300,
+            team: [
+                { id: 1, name: "Pikachu", level: 50, rareza: "Místico", hp: 800, maxHp: 800, active: true, locked: true },
+                { id: 4, name: "Charmander", level: 6, rareza: "Común", hp: 360, maxHp: 360, active: true, locked: false }
+            ],
+            storage: [
+                { id: 7, name: "Squirtle", level: 8, rareza: "Común", hp: 250, maxHp: 250, active: false, locked: false },
+                { id: 10, name: "Caterpie", level: 4, rareza: "Común", hp: 120, maxHp: 120, active: false, locked: false },
+                { id: 25, name: "Pidgey", level: 12, rareza: "Poco Común", hp: 200, maxHp: 200, active: false, locked: false }
+            ],
+            inventory: [
+                { id: 'pot', name: 'Poción de HP', count: 5, type: 'heal', value: 15 },
+                { id: 'rev', name: 'Revivir Pokémon', count: 2, type: 'revive', value: 50 },
+                { id: 'ball', name: 'Pokéball', count: 12, type: 'item', value: 10 }
+            ]
+        };
+
+        // --- FUNCIONES DE VENTANAS (MODALES) ---
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+            if (modalId === 'inventoryModal') renderInventory();
+            if (modalId === 'pokedexModal') renderPokedex();
+            if (modalId === 'weakPokemonModal') loadWeakPokemonPreview();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // --- RENDERIZAR EQUIPO ACTIVO (ARRIBA) ---
+        function renderTeam() {
+            for (let i = 0; i < 2; i++) {
+                let slotDiv = document.getElementById(`slot-${i}`);
+                let poke = playerData.team[i];
+                if (poke) {
+                    slotDiv.innerHTML = `
+                        <b>${poke.name} (Lv.${poke.level})</b><br>
+                        <small>[${poke.rareza}]</small><br>
+                        HP: ${poke.hp}/${poke.maxHp}
+                    `;
+                }
+            }
+            document.getElementById('playerMoney').innerText = playerData.money;
+        }
+
+        // --- INVENTARIO: USAR ÍTEMS ---
+        function renderInventory() {
+            let container = document.getElementById('inventoryList');
+            container.innerHTML = '';
+            playerData.inventory.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="item-row">
+                        <span>${item.name} (x${item.count})</span>
+                        <div>
+                            <button class="action-btn" onclick="useItem(${index})">Usar</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function useItem(index) {
+            let item = playerData.inventory[index];
+            if (item.count > 0) {
+                if (item.type === 'heal') {
+                    // Cura al primer Pokémon del equipo como ejemplo
+                    playerData.team[0].hp = Math.min(playerData.team[0].maxHp, playerData.team[0].hp + 100);
+                    item.count--;
+                    alert(`¡Usaste ${item.name}! Pokémon curado.`);
+                } else if (item.type === 'revive') {
+                    item.count--;
+                    alert(`¡Usaste ${item.name}! Pokémon revivido.`);
+                } else {
+                    alert(`El ítem ${item.name} no se usa de esta forma.`);
+                }
+                renderInventory();
+                renderTeam();
+            } else {
+                alert("¡No te quedan unidades de este ítem!");
+            }
+        }
+
+        // --- POKÉDEX: ESTADÍSTICAS, PROTEGER Y CAMBIAR DE EQUIPO ---
+        function renderPokedex() {
+            let container = document.getElementById('pokedexList');
+            container.innerHTML = '<h4>Tu Equipo Actual</h4>';
+            
+            playerData.team.forEach((poke, idx) => {
+                container.innerHTML += `
+                    <div class="poke-row" style="border: 1px solid #ffcc00;">
+                        <span><b>[Activo]</b> ${poke.name} (Lv.${poke.level}) - ${poke.rareza}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML += '<h4>Pokémon en Caja / Almacén</h4>';
+            playerData.storage.forEach((poke, idx) => {
+                let lockText = poke.locked ? '🔒 Protegido' : '🔓 Proteger';
+                container.innerHTML += `
+                    <div class="poke-row">
+                        <span>${poke.name} (Lv.${poke.level})<br><small>${poke.rareza} | HP: ${poke.hp}</small></span>
+                        <div>
+                            <button class="action-btn" onclick="toggleLock(${idx})">${lockText}</button>
+                            <button class="action-btn" style="background:#337ab7;" onclick="swapToTeam(${idx})">Poner en Equipo</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleLock(storageIndex) {
+            playerData.storage[storageIndex].locked = !playerData.storage[storageIndex].locked;
+            renderPokedex();
+        }
+
+        function swapToTeam(storageIndex) {
+            // Intercambia el segundo miembro del equipo con el de la caja
+            let temp = playerData.team[1];
+            let selectedPoke = playerData.storage[storageIndex];
+
+            playerData.team[1] = selectedPoke;
+            playerData.storage[storageIndex] = temp;
+
+            playerData.team[1].active = true;
+            playerData.storage[storageIndex].active = false;
+
+            renderTeam();
+            renderPokedex();
+            alert("¡Equipo actualizado con éxito!");
+        }
+
+        // --- VENTA DE POKÉMON DÉBILES / NO DESEADOS ---
+        function openInventorySell() {
+            closeModal('shopModal');
+            openModal('inventoryModal');
+        }
+
+        function openWeakPokemonSell() {
+            closeModal('shopModal');
+            openModal('weakPokemonModal');
+        }
+
+        function loadWeakPokemonPreview() {
+            let container = document.getElementById('weakPokemonList');
+            container.innerHTML = '';
+            
+            let weakOnes = playerData.storage.filter(p => (p.rareza === 'Común' || p.rareza === 'Poco Común') && !p.locked);
+
+            if (weakOnes.length === 0) {
+                container.innerHTML = '<p>No hay Pokémon comunes sin proteger para vender.</p>';
+                return;
+            }
+
+            weakOnes.forEach(poke => {
+                let price = poke.rareza === 'Común' ? 20 : 50;
+                container.innerHTML += `
+                    <div class="poke-row">
+                        <span>${poke.name} (${poke.rareza})</span>
+                        <span><b>+$${price}</b></span>
+                    </div>
+                `;
+            });
+        }
+
+        function confirmSellWeakPokemon() {
+            let earnings = 0;
+            // Filtramos la caja: conservamos los que estén bloqueados o sean raros/místicos
+            let remainingStorage = [];
+
+            playerData.storage.forEach(poke => {
+                if ((poke.rareza === 'Común' || poke.rareza === 'Poco Común') && !poke.locked) {
+                    earnings += (poke.rareza === 'Común' ? 20 : 50);
+                } else {
+                    remainingStorage.push(poke);
+                }
+            });
+
+            playerData.storage = remainingStorage;
+            playerData.money += earnings;
+
+            renderTeam();
+            closeModal('weakPokemonModal');
+            alert(`¡Has vendido los Pokémon débiles por un total de $${earnings}!`);
+        }
+
+        // Inicializar vista al cargar la página
+        renderTeam();
+    </script>
+</body>
+</html>
