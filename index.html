@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2.5D Isometric - Full Visuals</title>
+    <title>PokeTibia Classic Map & Natural Movement</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -39,7 +38,7 @@
             margin: 3px auto;
             width: 360px;
             height: 180px;
-            background: #2d5a27;
+            background: #38863b;
         }
 
         .team-bar {
@@ -140,8 +139,8 @@
 <body>
 
     <div class="game-panel" id="main-game-panel">
-        <h1>PokeTibia 2.5D - <span style="color:#ffcb05;">👑 chuodz [ADMIN]</span></h1>
-        <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">1430</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
+        <h1>PokeTibia Classic - <span style="color:#ffcb05;">👑 chuodz [ADMIN]</span></h1>
+        <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">1730</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
 
         <!-- EQUIPO ACTIVO -->
         <div id="team-container" class="team-bar"></div>
@@ -149,7 +148,7 @@
         <!-- CONTENEDOR DEL JUEGO -->
         <div id="game-container"></div>
 
-        <p id="battle-log">¡Combate isométrico activo!</p>
+        <p id="battle-log">¡Explora la ruta clásica estilo Pokémon!</p>
         
         <!-- BARRA DE ACCIONES -->
         <div>
@@ -157,7 +156,7 @@
             <button class="action-btn btn-orange" onclick="castSpell('heavy')">🔥 Rayo Fuerte</button>
             <button class="action-btn btn-blue" onclick="tryCatch()">🔴 Pokéball</button>
         </div>
-        <button class="action-btn btn-blue" style="width:100%; margin-top:2px;" onclick="changeRoute()">🗺️ Viajar a Zona Isométrica</button>
+        <button class="action-btn btn-blue" style="width:100%; margin-top:2px;" onclick="changeRoute()">🗺️ Viajar a Ruta Clásica</button>
 
         <!-- BOTONES DE MENÚ -->
         <div style="margin-top:4px;">
@@ -168,7 +167,7 @@
         </div>
         <button class="menu-btn btn-shop" style="width:100%; margin-top:2px;" onclick="toggleModal('chat-modal')">💬 Chat Global & Privado (MMO)</button>
 
-        <!-- D-PAD TÁCTIL -->
+        <!-- D-PAD TÁCTIL (MOVIMIENTO RECTO NATURAL) -->
         <div class="dpad-container">
             <button class="dpad-btn" id="btn-up">⬆️</button>
             <div class="dpad-row">
@@ -209,9 +208,9 @@
     </div>
 
     <div id="chat-modal" class="modal-window">
-        <div class="modal-header"><span>💬 Chat MMO Isométrico</span><button class="close-btn" onclick="toggleModal('chat-modal')">X</button></div>
+        <div class="modal-header"><span>💬 Chat MMO Clásico</span><button class="close-btn" onclick="toggleModal('chat-modal')">X</button></div>
         <div id="chat-messages" style="background:#111; border:1px solid #444; height:120px; overflow-y:auto; padding:4px; font-size:10px; margin-bottom:5px; border-radius:4px;">
-            <div style="color:#ffcb05;">[Sistema]: ¡Conectado al servidor 2.5D Isométrico!</div>
+            <div style="color:#ffcb05;">[Sistema]: ¡Conectado al servidor clásico!</div>
         </div>
         <div style="display:flex;">
             <input type="text" id="chat-input" placeholder="Mensaje..." style="flex:1; background:#222; color:#fff; border:1px solid #555; padding:3px; font-size:10px; border-radius:3px;">
@@ -233,7 +232,7 @@
         let currentAccount = "chuodz";
         let isAdmin = true;
         let playerData = {
-            coins: 1430, pokeballs: 5, greatballs: 2, ultraballs: 1, potions: 5, superpotions: 2, revives: 2,
+            coins: 1730, pokeballs: 5, greatballs: 2, ultraballs: 1, potions: 5, superpotions: 2, revives: 2,
             routeIndex: 0, inventory: {},
             team: [
                 { id: 25, name: "Pikachu", level: 11, exp: 40, maxExp: 100, hp: 108, maxHp: 150, atk: 45 },
@@ -257,7 +256,7 @@
                 width: 360,
                 height: 180,
                 parent: 'game-container',
-                backgroundColor: 0x2d5a27,
+                backgroundColor: 0x38863b,
                 physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
                 scene: { preload: preload, create: create, update: update }
             };
@@ -272,15 +271,15 @@
 
         function create() {
             sceneContext = this;
-            drawIsometricMap(this);
+            drawClassicPokemonMap(this);
             createTrainerTexture(this);
 
             trainer = this.physics.add.sprite(110, 100, 'trainer_gfx');
             let activePoke = playerData.team[playerData.activePokeIndex];
-            petPokemon = this.physics.add.sprite(80, 110, `poke_${activePoke.id}`);
+            petPokemon = this.physics.add.sprite(80, 100, `poke_${activePoke.id}`);
             petPokemon.setScale(0.85);
 
-            enemySprite = this.physics.add.sprite(260, 75, 'poke_143');
+            enemySprite = this.physics.add.sprite(270, 75, 'poke_143');
             enemySprite.setScale(0.9);
 
             enemyHpBar = this.add.graphics();
@@ -293,47 +292,38 @@
             setupDpadButton('btn-down', 'down');
         }
 
-        // Mapa isométrico detallado con césped, caminos y árboles decorativos
-        function drawIsometricMap(scene) {
+        // Mapa clásico estilo Pokémon (Césped verde claro con caminos rectos y parches de césped alto)
+        function drawClassicPokemonMap(scene) {
             let bg = scene.add.graphics();
-            // Fondo verde césped isométrico
-            bg.fillStyle(0x2d5a27, 1);
+            // Fondo de césped clásico
+            bg.fillStyle(0x38863b, 1);
             bg.fillRect(0, 0, 360, 180);
 
-            // Camino central de piedra/tierra isométrica en cruz
-            bg.fillStyle(0x8b5a2b, 1);
-            bg.fillRect(0, 80, 360, 25);
-            bg.fillRect(165, 0, 30, 180);
+            // Camino de tierra principal en cruz recta
+            bg.fillStyle(0xc8ad7f, 1);
+            bg.fillRect(0, 75, 360, 35);
+            bg.fillRect(160, 0, 40, 180);
 
-            // Cuadrícula de rombos isométricos
-            bg.lineStyle(1, 0x3a7532, 0.7);
-            let tw = 40, th = 20;
-            for (let x = -20; x < 400; x += tw) {
-                for (let y = -10; y < 200; y += th) {
-                    bg.strokePoints([
-                        {x: x, y: y + th/2},
-                        {x: x + tw/2, y: y},
-                        {x: x + tw, y: y + th/2},
-                        {x: x + tw/2, y: y + th}
-                    ], true);
-                }
-            }
+            // Parches de césped alto clásico (tipo RPG clásico)
+            bg.fillStyle(0x275d29, 1);
+            bg.fillRect(20, 15, 75, 45);
+            bg.fillRect(265, 120, 75, 45);
 
-            // Árboles decorativos en las esquinas
-            bg.fillStyle(0x143308, 1);
-            bg.fillCircle(40, 30, 22);
-            bg.fillCircle(320, 30, 22);
-            bg.fillCircle(40, 150, 22);
-            bg.fillCircle(320, 150, 22);
+            // Árboles clásicos redondos en las esquinas
+            bg.fillStyle(0x133b16, 1);
+            bg.fillCircle(30, 20, 18);
+            bg.fillCircle(330, 20, 18);
+            bg.fillCircle(30, 160, 18);
+            bg.fillCircle(330, 160, 18);
         }
 
         function createTrainerTexture(scene) {
             if (scene.textures.exists('trainer_gfx')) return;
             let g = scene.add.graphics();
-            g.fillStyle(0xffd700, 1); g.fillRect(6, 12, 12, 12); // Ropa Admin Dorado
+            g.fillStyle(0xffd700, 1); g.fillRect(6, 12, 12, 12); // Admin Gold Outfit
             g.fillStyle(0x333333, 1); g.fillRect(7, 24, 10, 8);
             g.fillStyle(0xffcc99, 1); g.fillCircle(12, 8, 6);
-            g.fillStyle(0xcc0000, 1); g.fillRect(4, 2, 16, 4); // Gorra Admin
+            g.fillStyle(0xcc0000, 1); g.fillRect(4, 2, 16, 4); // Gorra clásica
             g.generateTexture('trainer_gfx', 24, 32);
             g.destroy();
         }
@@ -357,24 +347,24 @@
             btn.addEventListener('mouseup', () => { moveState[direction] = false; });
         }
 
+        // Movimiento rectilíneo natural (Arriba, Abajo, Izquierda, Derecha sin diagonales forzadas)
         function update() {
             if (!trainer) return;
             trainer.setVelocity(0);
             let speed = 120;
 
-            if (cursors.left.isDown || moveState.left) { trainer.setVelocityX(-speed); trainer.setVelocityY(speed/2); }
-            else if (cursors.right.isDown || moveState.right) { trainer.setVelocityX(speed); trainer.setVelocityY(-speed/2); }
-            if (cursors.up.isDown || moveState.up) { trainer.setVelocityX(-speed); trainer.setVelocityY(-speed/2); }
-            else if (cursors.down.isDown || moveState.down) { trainer.setVelocityX(speed); trainer.setVelocityY(speed/2); }
+            if (cursors.left.isDown || moveState.left) { trainer.setVelocityX(-speed); }
+            else if (cursors.right.isDown || moveState.right) { trainer.setVelocityX(speed); }
+            else if (cursors.up.isDown || moveState.up) { trainer.setVelocityY(-speed); }
+            else if (cursors.down.isDown || moveState.down) { trainer.setVelocityY(speed); }
 
             if (petPokemon && trainer) {
-                petPokemon.x = Phaser.Math.Linear(petPokemon.x, trainer.x - 25, 0.1);
-                petPokemon.y = Phaser.Math.Linear(petPokemon.y, trainer.y + 12, 0.1);
+                petPokemon.x = Phaser.Math.Linear(petPokemon.x, trainer.x - 28, 0.1);
+                petPokemon.y = Phaser.Math.Linear(petPokemon.y, trainer.y, 0.1);
             }
             if (enemySprite) updateEnemyHpBar();
         }
 
-        // Efectos visuales de ataques y proyectiles en pantalla
         function castSpell(type) {
             let now = Date.now();
             if (now - lastAttackTime < 700) return;
@@ -383,9 +373,8 @@
             if (!sceneContext || !petPokemon || !enemySprite) return;
 
             let color = type === 'heavy' ? 0xff3300 : 0xffea00;
-            let size = type === 'heavy' ? 10 : 7;
+            let size = type === 'heavy' ? 11 : 8;
 
-            // Proyectil viajando hacia el enemigo
             let projectile = sceneContext.add.circle(petPokemon.x, petPokemon.y, size, color, 1);
             sceneContext.tweens.add({
                 targets: projectile,
@@ -394,8 +383,7 @@
                 duration: 200,
                 onComplete: () => {
                     projectile.destroy();
-                    // Destello de impacto
-                    let flash = sceneContext.add.circle(enemySprite.x, enemySprite.y, 22, 0xffffff, 0.95);
+                    let flash = sceneContext.add.circle(enemySprite.x, enemySprite.y, 24, 0xffffff, 0.95);
                     sceneContext.tweens.add({
                         targets: flash,
                         scale: 2.5,
@@ -409,10 +397,10 @@
                     updateEnemyHpBar();
 
                     if (activeEnemy.currentHp <= 0) {
-                        playerData.coins += 150;
+                        playerData.coins += 200;
                         activeEnemy.currentHp = activeEnemy.maxHp;
-                        document.getElementById('battle-log').innerText = `💥 ¡Derrotaste a ${activeEnemy.name}! (+150 PokéDollars)`;
-                        alert("🎉 ¡Victoria en combate isométrico!");
+                        document.getElementById('battle-log').innerText = `💥 ¡Derrotaste a ${activeEnemy.name}! (+200 PokéDollars)`;
+                        alert("🎉 ¡Victoria en la Ruta Clásica!");
                     } else {
                         document.getElementById('battle-log').innerText = `⚡ ¡Ataque certero! HP de ${activeEnemy.name}: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
                     }
@@ -421,17 +409,22 @@
             });
         }
 
+        // Pokéball con diseño visual mejorado y llamativo
         function tryCatch() {
             if (!sceneContext || !petPokemon || !enemySprite) return;
-            let ball = sceneContext.add.circle(petPokemon.x, petPokemon.y, 8, 0xcc0000, 1);
+            
+            let ball = sceneContext.add.circle(petPokemon.x, petPokemon.y, 10, 0xcc0000, 1);
+            let line = sceneContext.add.rectangle(petPokemon.x, petPokemon.y, 20, 3, 0x000000);
+            let dot = sceneContext.add.circle(petPokemon.x, petPokemon.y, 3, 0xffffff, 1);
+
             sceneContext.tweens.add({
-                targets: ball,
+                targets: [ball, line, dot],
                 x: enemySprite.x,
                 y: enemySprite.y,
-                duration: 250,
+                duration: 280,
                 onComplete: () => {
-                    ball.destroy();
-                    alert("🔴 ¡Pokéball lanzada con éxito en el mapa 2.5D!");
+                    ball.destroy(); line.destroy(); dot.destroy();
+                    alert("🔴 ¡Pokéball clásica lanzada con éxito!");
                 }
             });
         }
@@ -444,7 +437,7 @@
         function buyItem(k, q, p) { playerData.coins += 100; updateUI(); alert("🛒 ¡Compra realizada!"); }
         function healTeamShop() { playerData.team.forEach(p => p.hp = p.maxHp); updateUI(); alert("🏥 ¡Equipo curado!"); }
         function sellLoot() { playerData.coins += 300; updateUI(); alert("💰 ¡Loot vendido!"); }
-        function changeRoute() { alert("🗺️ ¡Viajando a nueva zona isométrica!"); }
+        function changeRoute() { alert("🗺️ ¡Cambiando de ruta clásica!"); }
         function selectPoke(idx) {
             playerData.activePokeIndex = idx;
             let p = playerData.team[idx];
