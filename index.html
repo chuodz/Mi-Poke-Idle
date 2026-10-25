@@ -3,78 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia Idle - Edición Completa</title>
+    <title>PokeTibia Idle World - Definitivo</title>
     <style>
         body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; margin: 0; padding: 10px; }
-        .container { max-width: 400px; margin: 0 auto; }
+        .container { max-width: 420px; margin: 0 auto; }
         .card { background: #1e1e1e; border: 2px solid #ffcb05; padding: 15px; border-radius: 10px; margin: 10px 0; box-sizing: border-box; }
-        button { padding: 10px; background: #e3350d; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 15px; width: 100%; margin-top: 8px; }
+        button { padding: 10px; background: #e3350d; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 14px; width: 100%; margin-top: 6px; }
         button:hover { background: #b32305; }
-        .btn-catch { background: #3b4cca; }
-        .btn-catch:hover { background: #2a3594; }
+        .btn-secondary { background: #3b4cca; }
+        .btn-secondary:hover { background: #2a3594; }
+        .btn-zone { background: #28a745; }
+        .btn-zone:hover { background: #1e7e34; }
         .hp-bar { width: 100%; background: #444; height: 18px; border-radius: 5px; overflow: hidden; margin: 8px 0; }
         .hp-fill { height: 100%; background: #4caf50; width: 100%; transition: width 0.2s; }
-        h1 { color: #ffcb05; font-size: 22px; margin: 10px 0; }
-        h3 { margin: 5px 0 10px 0; font-size: 16px; }
-        p { margin: 6px 0; font-size: 14px; }
-        .team-list { text-align: left; font-size: 13px; max-height: 100px; overflow-y: auto; background: #2a2a2a; padding: 5px; border-radius: 5px; }
+        h1 { color: #ffcb05; font-size: 20px; margin: 8px 0; }
+        h3 { margin: 5px 0 8px 0; font-size: 15px; }
+        p { margin: 5px 0; font-size: 13px; }
+        .pokemon-img { width: 96px; height: 96px; image-rendering: pixelated; margin: 5px auto; display: block; }
+        .scroll-box { text-align: left; font-size: 12px; max-height: 120px; overflow-y: auto; background: #2a2a2a; padding: 8px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>PokeTibia Idle World</h1>
+    <p>Zona Actual: <b id="zone-name">Ruta 1</b></p>
 
     <!-- COMBATE -->
     <div class="card">
-        <h3 id="enemy-name">Pikachu Salvaje (Lv. 1)</h3>
+        <h3 id="enemy-name">Cargando...</h3>
+        <img id="enemy-sprite" class="pokemon-img" src="" alt="Pokemon">
         <div class="hp-bar"><div id="enemy-hp" class="hp-fill"></div></div>
         <p>HP: <span id="hp-text">100/100</span></p>
         <button onclick="attackEnemy()">¡Atacar Manual!</button>
-        <button class="btn-catch" onclick="tryCatch()">Lanzar Pokéball (Req: 10 Pokéballs)</button>
+        <button class="btn-secondary" onclick="tryCatch(1)">Lanzar Pokéball (10)</button>
+        <button class="btn-secondary" onclick="tryCatch(2)">Lanzar Superball (5)</button>
     </div>
 
     <!-- PROGRESO Y TIENDA -->
     <div class="card">
-        <h3>Tu Progreso</h3>
+        <h3>Progreso y Tienda</h3>
         <p>PokéDollars: $<span id="coins">0</span></p>
-        <p>Pokéballs: <span id="pokeballs">5</span></p>
+        <p>Pokéballs: <span id="pokeballs">5</span> | Superballs: <span id="superballs">0</span></p>
         <p>Daño Automático (DPS): <span id="dps">5</span> /seg</p>
         <button onclick="buyUpgrade()">Mejorar Daño ($<span id="upgrade-cost">10</span>)</button>
-        <button onclick="buyPokeball()">Comprar Pokéball ($15)</button>
+        <button onclick="buyBall(1)">Comprar Pokéball ($15)</button>
+        <button onclick="buyBall(2)">Comprar Superball ($40)</button>
+        <button class="btn-zone" onclick="changeZone()">Cambiar de Zona ($100)</button>
     </div>
 
-    <!-- EQUIPO CAPTURADO -->
+    <!-- EQUIPO Y POKÉDEX -->
     <div class="card">
         <h3>Tu Equipo Capturado (<span id="team-count">0</span>)</h3>
-        <div id="team-list" class="team-list">Aún no has atrapado ningún Pokémon.</div>
+        <div id="team-list" class="scroll-box">Aún no has atrapado ningún Pokémon.</div>
+    </div>
+
+    <div class="card">
+        <h3>Pokédex (<span id="pokedex-count">0</span>/7)</h3>
+        <div id="pokedex-list" class="scroll-box">Explora para registrar Pokémon.</div>
     </div>
 </div>
 
     <script>
-        // LISTA DE POKÉMON SALVAJES POSIBLES
-        const pokemonPool = [
-            { name: "Pikachu", baseHp: 100, reward: 5 },
-            { name: "Rattata", baseHp: 60, reward: 3 },
-            { name: "Pidgey", baseHp: 80, reward: 4 },
-            { name: "Caterpie", baseHp: 50, reward: 2 },
-            { name: "Bulbasaur", baseHp: 130, reward: 8 },
-            { name: "Charmander", baseHp: 130, reward: 8 },
-            { name: "Squirtle", baseHp: 130, reward: 8 }
+        const zones = [
+            { name: "Ruta 1", multiplier: 1, cost: 100, pokes: [
+                { name: "caterpie", id: 10, baseHp: 50, reward: 3 },
+                { name: "rattata", id: 19, baseHp: 60, reward: 4 },
+                { name: "pidgey", id: 16, baseHp: 70, reward: 5 }
+            ]},
+            { name: "Bosque Verde", multiplier: 2.5, cost: 300, pokes: [
+                { name: "pikachu", id: 25, baseHp: 120, reward: 12 },
+                { name: "bulbasaur", id: 1, baseHp: 150, reward: 15 },
+                { name: "charmander", id: 4, baseHp: 150, reward: 15 },
+                { name: "squirtle", id: 7, baseHp: 150, reward: 15 }
+            ]}
         ];
 
         let player = {
             coins: 0,
             pokeballs: 5,
+            superballs: 0,
             dps: 5,
             upgradeCost: 10,
-            team: []
+            currentZoneIndex: 0,
+            team: [],
+            pokedex: {}
         };
 
-        let currentLevel = 1;
-
         let enemy = {
-            name: "Pikachu",
+            name: "",
+            id: 1,
             level: 1,
             maxHp: 100,
             hp: 100,
@@ -82,32 +100,61 @@
         };
 
         function spawnNewEnemy() {
-            let randomPoke = pokemonPool[Math.floor(Math.random() * pokemonPool.length)];
-            currentLevel = Math.floor(Math.random() * 3) + currentLevel; // Escala poco a poco
+            let zone = zones[player.currentZoneIndex];
+            let randomPoke = zone.pokes[Math.floor(Math.random() * zone.pokes.length)];
+            let lvl = Math.floor(Math.random() * 3) + (player.currentZoneIndex * 3) + 1;
+            
             enemy.name = randomPoke.name;
-            enemy.level = Math.max(1, Math.floor(currentLevel));
-            enemy.maxHp = Math.floor(randomPoke.baseHp * (1 + (enemy.level * 0.2)));
+            enemy.id = randomPoke.id;
+            enemy.level = lvl;
+            enemy.maxHp = Math.floor(randomPoke.baseHp * zone.multiplier * (1 + (lvl * 0.1)));
             enemy.hp = enemy.maxHp;
-            enemy.reward = Math.floor(randomPoke.reward * (1 + (enemy.level * 0.15)));
+            enemy.reward = Math.floor(randomPoke.reward * zone.multiplier);
+
+            // Registrar en Pokédex
+            if(!player.pokedex[enemy.name]) {
+                player.pokedex[enemy.name] = { seen: 1, caught: 0, id: enemy.id };
+            } else {
+                player.pokedex[enemy.name].seen++;
+            }
         }
 
         function updateUI() {
-            document.getElementById('enemy-name').innerText = `${enemy.name} (Lv. ${enemy.level})`;
+            let zone = zones[player.currentZoneIndex];
+            document.getElementById('zone-name').innerText = zone.name;
+            document.getElementById('enemy-name').innerText = `${enemy.name.toUpperCase()} (Lv. ${enemy.level})`;
+            document.getElementById('enemy-sprite').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${enemy.id}.png`;
             document.getElementById('hp-text').innerText = `${Math.max(0, enemy.hp)} / ${enemy.maxHp}`;
+            
             let hpPercent = (enemy.hp / enemy.maxHp) * 100;
             document.getElementById('enemy-hp').style.width = `${Math.max(0, hpPercent)}%`;
             
             document.getElementById('coins').innerText = player.coins;
             document.getElementById('pokeballs').innerText = player.pokeballs;
+            document.getElementById('superballs').innerText = player.superballs;
             document.getElementById('dps').innerText = player.dps;
             document.getElementById('upgrade-cost').innerText = player.upgradeCost;
             document.getElementById('team-count').innerText = player.team.length;
 
+            // Renderizar Equipo
             let teamContainer = document.getElementById('team-list');
             if (player.team.length === 0) {
                 teamContainer.innerHTML = "Aún no has atrapado ningún Pokémon.";
             } else {
-                teamContainer.innerHTML = player.team.map(p => `• ${p.name} (Lv. ${p.level})`).join('<br>');
+                teamContainer.innerHTML = player.team.map(p => `• ${p.name.toUpperCase()} (Lv. ${p.level})`).join('<br>');
+            }
+
+            // Renderizar Pokédex
+            let pokedexKeys = Object.keys(player.pokedex);
+            document.getElementById('pokedex-count').innerText = pokedexKeys.length;
+            let pokedexContainer = document.getElementById('pokedex-list');
+            if (pokedexKeys.length === 0) {
+                pokedexContainer.innerHTML = "Explora para registrar Pokémon.";
+            } else {
+                pokedexContainer.innerHTML = pokedexKeys.map(k => {
+                    let data = player.pokedex[k];
+                    return `✔️ ${k.toUpperCase()} | Visto: ${data.seen} | Atrapado: ${data.caught}`;
+                }).join('<br>');
             }
         }
 
@@ -121,39 +168,43 @@
 
         function defeatEnemy() {
             player.coins += enemy.reward;
-            // Probabilidad de encontrar una Pokéball al derrotar enemigos
-            if (Math.random() < 0.4) {
-                player.pokeballs += 1;
-            }
+            if (Math.random() < 0.4) player.pokeballs += 1;
+            if (Math.random() < 0.15) player.superballs += 1;
             spawnNewEnemy();
             saveGame();
         }
 
-        function tryCatch() {
-            if (player.pokeballs >= 10) {
-                player.pokeballs -= 10;
-                // Probabilidad de captura basada en la vida restante del enemigo (a menor vida, más fácil)
+        function tryCatch(ballType) {
+            let reqBalls = ballType === 1 ? 10 : 5;
+            let ballName = ballType === 1 ? "Pokéballs" : "Superballs";
+            let hasEnough = ballType === 1 ? player.pokeballs >= reqBalls : player.superballs >= reqBalls;
+
+            if (hasEnough) {
+                if(ballType === 1) player.pokeballs -= reqBalls;
+                else player.superballs -= reqBalls;
+
                 let hpPercent = enemy.hp / enemy.maxHp;
-                let catchChance = 0.4 + (0.5 * (1 - hpPercent)); // Hasta 90% si está muy débil
+                let catchChance = (ballType === 1 ? 0.4 : 0.7) + (0.3 * (1 - hpPercent));
                 
                 if (Math.random() < catchChance) {
-                    alert(`¡Felicidades! Atrapaste a ${enemy.name} (Lv. ${enemy.level})`);
+                    alert(`¡Felicidades! Atrapaste a ${enemy.name.toUpperCase()}`);
                     player.team.push({ name: enemy.name, level: enemy.level });
+                    player.pokedex[enemy.name].caught++;
                     spawnNewEnemy();
                 } else {
-                    alert(`¡Oh no! ${enemy.name} escapó de la Pokéball.`);
+                    alert(`¡Oh no! ${enemy.name.toUpperCase()} escapó.`);
                 }
                 updateUI();
                 saveGame();
             } else {
-                alert("¡Necesitas al menos 10 Pokéballs para intentar capturar!");
+                alert(`¡Necesitas al menos ${reqBalls} ${ballName}!`);
             }
         }
 
         function buyUpgrade() {
             if (player.coins >= player.upgradeCost) {
                 player.coins -= player.upgradeCost;
-                player.dps += 3;
+                player.dps += 4;
                 player.upgradeCost = Math.floor(player.upgradeCost * 1.4);
                 updateUI();
             } else {
@@ -161,17 +212,36 @@
             }
         }
 
-        function buyPokeball() {
-            if (player.coins >= 15) {
-                player.coins -= 15;
-                player.pokeballs += 1;
+        function buyBall(type) {
+            let cost = type === 1 ? 15 : 40;
+            if (player.coins >= cost) {
+                player.coins -= cost;
+                if(type === 1) player.pokeballs += 1;
+                else player.superballs += 1;
                 updateUI();
             } else {
-                alert("¡Necesitas $15 PokéDollars para comprar una Pokéball!");
+                alert("¡No tienes suficientes PokéDollars!");
             }
         }
 
-        // Bucle automático de combate Idle
+        function changeZone() {
+            if(player.currentZoneIndex + 1 < zones.length) {
+                let nextZone = zones[player.currentZoneIndex + 1];
+                if(player.coins >= nextZone.cost) {
+                    player.coins -= nextZone.cost;
+                    player.currentZoneIndex++;
+                    spawnNewEnemy();
+                    updateUI();
+                    saveGame();
+                    alert(`¡Bienvenido a la ${nextZone.name}!`);
+                } else {
+                    alert(`Necesitas $${nextZone.cost} PokéDollars para desbloquear esta zona.`);
+                }
+            } else {
+                alert("¡Ya estás en la zona más avanzada disponible!");
+            }
+        }
+
         setInterval(() => {
             if (enemy.hp > 0) {
                 enemy.hp -= player.dps / 2;
@@ -183,16 +253,15 @@
         }, 500);
 
         function saveGame() {
-            localStorage.setItem('pokeTibiaSave', JSON.stringify({ player, enemy, currentLevel }));
+            localStorage.setItem('pokeTibiaDefinitivo', JSON.stringify({ player, enemy }));
         }
 
         function loadGame() {
-            let saved = localStorage.getItem('pokeTibiaSave');
+            let saved = localStorage.getItem('pokeTibiaDefinitivo');
             if (saved) {
                 let data = JSON.parse(saved);
                 player = data.player;
                 enemy = data.enemy || enemy;
-                currentLevel = data.currentLevel || 1;
             } else {
                 spawnNewEnemy();
             }
