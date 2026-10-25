@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2D - Master Edition</title>
+    <title>PokeTibia 2D Master</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -160,9 +160,9 @@
         };
 
         const routes = [
-            { name: "Ruta 1", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25 },
-            { name: "Bosque Verde", bg: 0x183b0d, treeColor: 0x0a1a05, grassColor: 0x245413 },
-            { name: "Cueva Oscura", bg: 0x222222, treeColor: 0x111111, grassColor: 0x444444 }
+            { name: "Ruta 1", bg: 0x2e5a1c },
+            { name: "Bosque Verde", bg: 0x183b0d },
+            { name: "Cueva Oscura", bg: 0x222222 }
         ];
 
         const allPokemonSpecies = [
@@ -206,16 +206,10 @@
                 this.load.image(`poke${p.id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`);
             });
             this.load.image('poke26', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/26.png');
-            this.load.image('poke25', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png');
-            this.load.image('poke4', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png');
-            this.load.image('poke7', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png');
         }
 
         function create() {
             sceneContext = this;
-
-            // Dibujar árboles y decoración del mapa
-            drawMapDecoration(this, routes[0]);
 
             let activePoke = playerData.team[playerData.activePokeIndex];
             player = this.physics.add.sprite(90, 90, `poke${activePoke.id}`);
@@ -231,26 +225,6 @@
 
             spawnEnemyInMap(this);
             updateUI();
-        }
-
-        function drawMapDecoration(scene, route) {
-            let graphics = scene.add.graphics();
-            
-            // Zonas de césped alto
-            graphics.fillStyle(route.grassColor, 1);
-            graphics.fillRect(40, 30, 90, 50);
-            graphics.fillRect(220, 100, 90, 50);
-
-            // Bordes de Árboles
-            graphics.fillStyle(route.treeColor, 1);
-            for(let x = 15; x <= 345; x += 30) {
-                graphics.fillCircle(x, 15, 16);
-                graphics.fillCircle(x, 165, 16);
-            }
-            for(let y = 15; y <= 165; y += 30) {
-                graphics.fillCircle(15, y, 16);
-                graphics.fillCircle(345, y, 16);
-            }
         }
 
         function spawnEnemyInMap(scene) {
@@ -469,15 +443,6 @@
             document.getElementById('zone-name').innerText = r.name;
             if (sceneContext) {
                 sceneContext.cameras.main.setBackgroundColor(r.bg);
-                sceneContext.children.removeAll();
-                
-                drawMapDecoration(sceneContext, r);
-
-                let activePoke = playerData.team[playerData.activePokeIndex];
-                player = sceneContext.physics.add.sprite(90, 90, `poke${activePoke.id}`);
-                player.setCollideWorldBounds(true);
-                player.setScale(1.1);
-
                 spawnEnemyInMap(sceneContext);
             }
         }
@@ -524,3 +489,9 @@
                 if(playerData.inventory[i] > 0) inv.push(`${i} x${playerData.inventory[i]}`);
             }
             document.getElementById('inventory-list').innerHTML = inv.length ? inv.join(', ') : "Vacío";
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
