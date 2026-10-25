@@ -151,8 +151,7 @@
     </div>
 
     <script>
-        // Sistema de Carga de Partida Guardada
-        let savedData = localStorage.getItem('poketibia_save_v2');
+        let savedData = localStorage.getItem('poketibia_save_v3');
         let playerData = savedData ? JSON.parse(savedData) : {
             coins: 40,
             pokeballs: 5,
@@ -165,7 +164,7 @@
             pokedex: {},
             box: [],
             questCount: 0,
-            questLevel: 0 // Niveles de misión: 0(3), 1(10), 2(25), 3(50), 4(100)
+            questLevel: 0
         };
 
         const questGoals = [
@@ -177,7 +176,7 @@
         ];
 
         function saveGame() {
-            localStorage.setItem('poketibia_save_v2', JSON.stringify(playerData));
+            localStorage.setItem('poketibia_save_v3', JSON.stringify(playerData));
         }
 
         const routes = [
@@ -190,7 +189,7 @@
             { id: 10, name: "Caterpie", hp: 40, loot: 'Seda', price: 8 },
             { id: 16, name: "Pidgey", hp: 50, loot: 'Pluma', price: 12 },
             { id: 19, name: "Rattata", hp: 45, loot: 'Colmillo', price: 10 },
-            { id: 25, name: "Pikachu", hp: 60, loot: 'Piedra Trueno', price: 25 },
+            { id: 25, name: "Pikachu", hp: 60, loot: 'Piedra Trueno', price: 25, evoId: 26, evoName: "Raichu" },
             { id: 4, name: "Charmander", hp: 55, loot: 'Piedra Fuego', price: 30 },
             { id: 7, name: "Squirtle", hp: 65, loot: 'Caparazón', price: 20 },
             { id: 26, name: "Raichu", hp: 90, loot: 'Cola Fuerte', price: 35 }
@@ -228,10 +227,10 @@
         let moveState = { left: false, right: false, up: false, down: false };
 
         function preload() {
-            allPokemonSpecies.forEach(p => {
-                this.load.image(`poke_${p.id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`);
-            });
-            this.load.image('poke_26', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/26.png');
+            // Precarga universal para todos los IDs posibles del juego
+            for (let i = 1; i <= 151; i++) {
+                this.load.image(`poke_${i}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i}.png`);
+            }
         }
 
         function create() {
@@ -245,7 +244,7 @@
 
             let activePoke = playerData.team[playerData.activePokeIndex];
             petPokemon = this.physics.add.sprite(65, 95, `poke_${activePoke.id}`);
-            petPokemon.setScale(0.85);
+            petPokemon.setScale(0.9);
 
             cursors = this.input.keyboard.createCursorKeys();
 
@@ -313,7 +312,7 @@
             }
 
             enemySprite = scene.physics.add.sprite(randomX, randomY, `poke_${randomPoke.id}`);
-            enemySprite.setScale(0.85);
+            enemySprite.setScale(0.9);
 
             enemyHpBar = scene.add.graphics();
             updateEnemyHpBar();
@@ -327,11 +326,11 @@
             if (!enemyHpBar || !enemySprite || !activeEnemy) return;
             enemyHpBar.clear();
             enemyHpBar.fillStyle(0x000000, 0.7);
-            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 22, 36, 5);
+            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 24, 36, 5);
 
             let pct = Math.max(0, activeEnemy.currentHp / activeEnemy.maxHp);
             enemyHpBar.fillStyle(pct > 0.4 ? 0x00ff00 : 0xff0000, 1);
-            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 22, 36 * pct, 5);
+            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 24, 36 * pct, 5);
         }
 
         function setupDpadButton(id, direction) {
@@ -405,26 +404,26 @@
             }
         }
 
-        // Efectos Visuales Mejorados de Ataques en Pantalla
+        // Efectos Visuales de Ataques Potenciados y Claros
         function spawnSpellEffect(type) {
-            if (!sceneContext || !trainer || !enemySprite) return;
-            let color = type === 'heavy' ? 0xff4500 : 0xffff00;
-            let size = type === 'heavy' ? 9 : 6;
+            if (!sceneContext || !petPokemon || !enemySprite) return;
+            let color = type === 'heavy' ? 0xff3300 : 0xffea00;
+            let size = type === 'heavy' ? 10 : 7;
             
-            let projectile = sceneContext.add.circle(trainer.x, trainer.y, size, color, 1);
+            let projectile = sceneContext.add.circle(petPokemon.x, petPokemon.y, size, color, 1);
             sceneContext.tweens.add({
                 targets: projectile,
                 x: enemySprite.x,
                 y: enemySprite.y,
-                duration: 200,
+                duration: 180,
                 onComplete: () => {
                     projectile.destroy();
-                    let flash = sceneContext.add.circle(enemySprite.x, enemySprite.y, 16, 0xffffff, 0.9);
+                    let flash = sceneContext.add.circle(enemySprite.x, enemySprite.y, 20, 0xffffff, 0.95);
                     sceneContext.tweens.add({
                         targets: flash,
-                        scale: 2.2,
+                        scale: 2.5,
                         alpha: 0,
-                        duration: 150,
+                        duration: 200,
                         onComplete: () => flash.destroy()
                     });
                 }
@@ -460,7 +459,6 @@
                 playerData.inventory[activeEnemy.loot] = (playerData.inventory[activeEnemy.loot] || 0) + 1;
                 playerData.coins += 12;
 
-                // Sistema Progresivo de Misiones (3 -> 10 -> 25 -> 50 -> 100)
                 playerData.questCount++;
                 let currentGoal = questGoals[playerData.questLevel] || questGoals[questGoals.length - 1];
                 
@@ -484,11 +482,12 @@
                     activePoke.hp = activePoke.maxHp;
                     alert(`🎉 ¡Tu ${activePoke.name} subió al Nivel ${activePoke.level}!`);
 
-                    if (activePoke.level >= 10 && activePoke.evoId) {
-                        alert(`✨ ¡Tu ${activePoke.name} evolucionó a ${activePoke.evoName}!`);
-                        activePoke.id = activePoke.evoId;
-                        activePoke.name = activePoke.evoName;
-                        activePoke.evoId = null;
+                    // Comprobar evolución automática
+                    let speciesInfo = allPokemonSpecies.find(s => s.id === activePoke.id || (s.evoId && s.id === activePoke.id));
+                    if (activePoke.level >= 10 && activePoke.id === 25) {
+                        activePoke.id = 26;
+                        activePoke.name = "Raichu";
+                        alert(`✨ ¡Tu Pikachu evolucionó a Raichu!`);
                         if (petPokemon) petPokemon.setTexture(`poke_${activePoke.id}`);
                     }
                 }
@@ -628,7 +627,7 @@
 
                 let activePoke = playerData.team[playerData.activePokeIndex];
                 petPokemon = sceneContext.physics.add.sprite(65, 95, `poke_${activePoke.id}`);
-                petPokemon.setScale(0.85);
+                petPokemon.setScale(0.9);
 
                 spawnEnemyInMap(sceneContext);
             }
