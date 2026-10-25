@@ -1,30 +1,53 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2D MMORPG - Sprites Reales</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PokeTibia MMORPG Online</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
         body { 
             margin: 0; 
-            background: #121212; 
-            color: #fff; 
+            padding: 4px;
+            background: #0f0f14; 
+            color: #f0f0f0; 
             text-align: center; 
-            font-family: Arial, sans-serif; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
         }
-        h1 { color: #ffcb05; font-size: 16px; margin: 4px 0; }
+        h1 { 
+            color: #ffcb05; 
+            font-size: 16px; 
+            margin: 2px 0 6px 0; 
+            text-shadow: 1px 1px 2px #000;
+        }
         .game-panel {
-            max-width: 390px;
+            max-width: 400px;
             margin: 0 auto;
-            background: #1e1e1e;
+            background: #181820;
             border: 2px solid #ffcb05;
-            border-radius: 8px;
-            padding: 6px;
-            box-sizing: border-box;
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        p { margin: 3px 0; font-size: 11px; }
-        .bar-bg { width: 100%; background: #444; height: 7px; border-radius: 4px; overflow: hidden; margin: 2px 0; }
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            background: #252530;
+            padding: 5px 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border: 1px solid #383848;
+        }
+        .bar-bg { width: 100%; background: #444; height: 6px; border-radius: 3px; overflow: hidden; margin: 2px 0; }
         .bar-fill { height: 100%; background: #3b4cca; width: 0%; transition: width 0.3s; }
         .hp-fill { background: #28a745; }
         
@@ -33,92 +56,131 @@
             justify-content: center;
             align-items: center;
             border: 2px solid #ffcb05; 
-            border-radius: 6px; 
+            border-radius: 8px; 
             overflow: hidden; 
-            margin: 4px auto;
+            margin: 0 auto 6px auto;
             width: 360px;
-            height: 190px;
-            background: #2d4d2d;
+            height: 200px;
+            background: #203818;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
         }
 
         .team-bar {
             display: flex;
-            justify-content: space-around;
-            background: #2a2a2a;
+            justify-content: space-between;
+            background: #22222e;
             border-radius: 6px;
-            padding: 4px;
-            margin: 4px 0;
+            padding: 5px;
+            margin-bottom: 6px;
+            gap: 4px;
         }
         .poke-slot {
-            width: 31%;
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 5px;
-            padding: 3px;
+            flex: 1;
+            background: #2c2c3a;
+            border: 1px solid #444458;
+            border-radius: 6px;
+            padding: 4px;
             cursor: pointer;
             font-size: 10px;
+            transition: all 0.2s;
         }
-        .poke-slot.active { border-color: #ffcb05; background: #443c15; }
-        .poke-slot img { width: 26px; height: 26px; display: block; margin: 0 auto; }
+        .poke-slot.active { border-color: #ffcb05; background: #4a401a; box-shadow: 0 0 5px rgba(255, 203, 5, 0.4); }
 
         .dpad-container {
-            margin-top: 4px;
+            margin: 6px 0;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
         .dpad-row { display: flex; }
         .dpad-btn, .action-btn {
-            background: #e3350d;
+            background: #d32f2f;
             color: white;
             font-weight: bold;
             border: 2px solid #ffcb05;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            user-select: none;
+            box-shadow: 0 3px 0 #8b0000;
+            active: transform 2px;
         }
-        .dpad-btn { width: 40px; height: 40px; font-size: 14px; margin: 2px; }
-        .action-btn { width: 31%; padding: 5px; margin-top: 3px; font-size: 10px; display: inline-block; }
-        .btn-green { background: #28a745; }
-        .btn-blue { background: #3b4cca; }
-        .btn-orange { background: #d97706; }
+        .dpad-btn:active, .action-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #8b0000;
+        }
+        .dpad-btn { width: 44px; height: 44px; font-size: 16px; margin: 2px; }
+        .action-btn { width: 32%; padding: 6px 2px; margin-top: 3px; font-size: 10px; display: inline-block; }
+        .btn-green { background: #2e7d32; box-shadow: 0 3px 0 #1b5e20; }
+        .btn-blue { background: #1565c0; box-shadow: 0 3px 0 #0d47a1; }
+        .btn-orange { background: #e65100; box-shadow: 0 3px 0 #b71c1c; }
 
         .box-section {
-            background: #2a2a2a;
+            background: #22222e;
             border: 1px solid #ffcb05;
             border-radius: 6px;
-            padding: 5px;
-            margin-top: 4px;
+            padding: 6px;
+            margin-top: 6px;
             font-size: 11px;
             text-align: left;
             max-height: 110px;
             overflow-y: auto;
         }
-        .shop-btn { padding: 2px 6px; font-size: 10px; background: #ffcb05; color: #000; font-weight: bold; border: none; border-radius: 3px; cursor: pointer; float: right; }
+        .shop-btn { 
+            padding: 2px 8px; 
+            font-size: 10px; 
+            background: #ffcb05; 
+            color: #000; 
+            font-weight: bold; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            float: right; 
+        }
+        #battle-log {
+            font-size: 11px;
+            color: #ffca28;
+            min-height: 16px;
+            margin: 4px 0;
+            font-weight: bold;
+        }
+        .online-badge {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #00ff00;
+            border-radius: 50%;
+            margin-right: 4px;
+            box-shadow: 0 0 5px #00ff00;
+        }
     </style>
 </head>
 <body>
 
     <div class="game-panel">
-        <h1>PokeTibia MMORPG Ultimate</h1>
-        <p>Balls: <b id="pokeballs">5</b> | Dollars: $<span id="coins">40</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
+        <h1>PokeTibia MMORPG Online</h1>
+        
+        <div class="stats-bar">
+            <span>🔴 Balls: <b id="pokeballs">5</b></span>
+            <span>💰 $: <span id="coins">40</span></span>
+            <span><span class="online-badge"></span><span id="online-count">Online: 1</span></span>
+            <span><span id="depot-status" style="color:#28a745;">Depot: Seguro</span></span>
+        </div>
 
         <!-- EQUIPO ACTIVO -->
-        <p style="text-align:left; margin:2px 0;"><b>Tu Equipo Activo:</b></p>
+        <div style="text-align:left; font-size:11px; margin-bottom:2px;"><b>Tu Equipo Activo:</b></div>
         <div id="team-container" class="team-bar"></div>
         
-        <!-- CONTENEDOR DEL JUEGO -->
+        <!-- CONTENEDOR DEL JUEGO PHASER -->
         <div id="game-container"></div>
 
-        <p id="battle-log">¡Explora los caminos y caza en el césped alto!</p>
+        <div id="battle-log">¡Explora la ruta con tu equipo!</div>
         
-        <!-- BARRA DE ATAQUES Y HECHIZOS -->
+        <!-- ACCIONES Y ATAQUES -->
         <div>
             <button class="action-btn btn-green" onclick="castSpell('fast')">⚡ Ataque Rápido</button>
             <button class="action-btn btn-orange" onclick="castSpell('heavy')">🔥 Rayo Fuerte</button>
             <button class="action-btn btn-blue" onclick="tryCatch()">🔴 Pokéball</button>
         </div>
-        <button class="action-btn btn-blue" style="width:100%; margin-top:3px;" onclick="changeRoute()">🗺️ Cambiar Mapa (<span id="zone-name">Ruta 1 - Pradera</span>)</button>
+        <button class="action-btn btn-blue" style="width:100%; margin-top:4px;" onclick="changeRoute()">🗺️ Cambiar Mapa (<span id="zone-name">Ruta 1 - Pradera</span>)</button>
 
         <!-- D-PAD TÁCTIL -->
         <div class="dpad-container">
@@ -133,20 +195,24 @@
         <!-- POKÉDEX Y COLECCIÓN -->
         <div class="box-section">
             <b>📖 Pokédex & Caja de Colección:</b>
-            <div id="pokedex-list" style="margin-top:2px;">Cargando...</div>
+            <div id="pokedex-list" style="margin-top:4px;">Cargando Pokédex...</div>
         </div>
 
         <!-- TIENDA E INVENTARIO -->
         <div class="box-section">
             <b>🎒 Loot:</b> <span id="inventory-list">Vacío</span><br>
-            <hr style="border-color:#444; margin:2px 0;">
-            <span>🏥 Curar en Centro Pokémon ($15)</span><button class="shop-btn" onclick="healTeam()">Curar</button><br>
-            <div style="margin-top:2px;"><span>🔴 Comprar Pokéball ($10)</span><button class="shop-btn" onclick="buyBall()">Comprar</button></div>
-            <div style="margin-top:2px;"><span>💰 Vender Loot</span><button class="shop-btn" onclick="sellLoot()">Vender</button></div>
+            <hr style="border-color:#383848; margin:4px 0;">
+            <span>🏥 Curar Centro Pokémon ($15)</span><button class="shop-btn" onclick="healTeam()">Curar</button><br>
+            <div style="margin-top:4px;"><span>🔴 Comprar Pokéball ($10)</span><button class="shop-btn" onclick="buyBall()">Comprar</button></div>
+            <div style="margin-top:4px;"><span>💰 Vender Loot</span><button class="shop-btn" onclick="sellLoot()">Vender</button></div>
         </div>
     </div>
 
     <script>
+        // --- ESTADO GLOBAL Y DATOS DEL JUGADOR ---
+        const myPlayerId = 'player_' + Math.floor(Math.random() * 8999 + 1000);
+        let remotePlayers = {};
+        
         let playerData = {
             coins: 40,
             pokeballs: 5,
@@ -161,9 +227,9 @@
         };
 
         const routes = [
-            { name: "Ruta 1 - Pradera", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25, pathColor: 0x8b5a2b },
-            { name: "Bosque Verde", bg: 0x183b0d, treeColor: 0x0a1a05, grassColor: 0x245413, pathColor: 0x5c3a1e },
-            { name: "Cueva Oscura", bg: 0x222222, treeColor: 0x111111, grassColor: 0x444444, pathColor: 0x666666 }
+            { name: "Ruta 1 - Pradera", bg: 0x1e3a14, treeColor: 0x0d1f08, grassColor: 0x2d541e, pathColor: 0x734a26 },
+            { name: "Bosque Verde", bg: 0x0f260a, treeColor: 0x051203, grassColor: 0x183b0f, pathColor: 0x4a3118 },
+            { name: "Cueva Oscura", bg: 0x1a1a1a, treeColor: 0x0a0a0a, grassColor: 0x333333, pathColor: 0x555555 }
         ];
 
         const allPokemonSpecies = [
@@ -179,11 +245,13 @@
         let enemySprite = null;
         let enemyHpBar = null;
         let lastAttackTime = 0;
+        let broadcastChannel = null;
 
+        // --- CONFIGURACIÓN DE PHASER ---
         const config = {
-            type: Phaser.AUTO,
+            type: Phaser.CANVAS,
             width: 360,
-            height: 190,
+            height: 200,
             parent: 'game-container',
             backgroundColor: routes[0].bg,
             physics: {
@@ -205,29 +273,25 @@
         let moveState = { left: false, right: false, up: false, down: false };
 
         function preload() {
-            // Precargar los sprites oficiales a color de la PokeAPI para todas las especies
-            allPokemonSpecies.forEach(p => {
-                this.load.image(`poke${p.id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`);
-            });
-            this.load.image('poke26', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/26.png');
+            // Sin cargas de red externas. Generación nativa en create.
         }
 
         function create() {
             sceneContext = this;
 
-            createTrainerTexture(this);
+            // Generar texturas nativas Pixel Art para todos los personajes
+            generateAllPixelTextures(this);
 
-            // Dibujar Decoración del Mapa
+            // Dibujar Decoración de Mapa
             drawMap(this, routes[0]);
 
-            // Entrenador Humano
-            trainer = this.physics.add.sprite(90, 95, 'trainer_gfx');
+            // Entrenador Local
+            trainer = this.physics.add.sprite(90, 100, 'trainer_gfx');
             trainer.setCollideWorldBounds(true);
 
-            // Pokémon Acompañante con su sprite oficial
+            // Pokémon Acompañante NATIVO
             let activePoke = playerData.team[playerData.activePokeIndex];
-            petPokemon = this.physics.add.sprite(65, 95, `poke${activePoke.id}`);
-            petPokemon.setScale(1.1);
+            petPokemon = this.physics.add.sprite(65, 100, `poke_gfx_${activePoke.id}`);
 
             cursors = this.input.keyboard.createCursorKeys();
 
@@ -237,48 +301,99 @@
             setupDpadButton('btn-down', 'down');
 
             spawnEnemyInMap(this);
+            setupNetwork();
             updateUI();
         }
 
-        function createTrainerTexture(scene) {
-            if (scene.textures.exists('trainer_gfx')) return;
-            let g = scene.add.graphics();
-            g.fillStyle(0x3366cc, 1); g.fillRect(6, 12, 12, 12);
-            g.fillStyle(0x333333, 1); g.fillRect(7, 24, 10, 8);
-            g.fillStyle(0xffcc99, 1); g.fillCircle(12, 8, 6);
-            g.fillStyle(0xcc0000, 1); g.fillRect(6, 2, 12, 4);
-            g.generateTexture('trainer_gfx', 24, 32);
-            g.destroy();
+        // --- GENERADOR NATIVO DE SPRITES PIXEL ART ---
+        function generateAllPixelTextures(scene) {
+            // Entrenador Humano Tibia
+            if (!scene.textures.exists('trainer_gfx')) {
+                let g = scene.add.graphics();
+                g.fillStyle(0x3366cc, 1); g.fillRect(6, 12, 12, 12); // Cuerpo
+                g.fillStyle(0x1a1a1a, 1); g.fillRect(7, 24, 10, 8);  // Pantalón
+                g.fillStyle(0xffcc99, 1); g.fillCircle(12, 8, 5);    // Cabeza
+                g.fillStyle(0xcc0000, 1); g.fillRect(6, 2, 12, 4);   // Gorra
+                g.generateTexture('trainer_gfx', 24, 32);
+                g.destroy();
+            }
+
+            // DIBUJO DE CADA POKÉMON EN PIXEL ART DENTRO DEL CANVAS
+            const drawSpecs = {
+                25: (g) => { // Pikachu
+                    g.fillStyle(0xffde00, 1); g.fillCircle(12, 12, 8);
+                    g.fillStyle(0xffde00, 1); g.fillRect(4, 2, 4, 8); g.fillRect(16, 2, 4, 8);
+                    g.fillStyle(0x000000, 1); g.fillRect(4, 2, 4, 3); g.fillRect(16, 2, 4, 3);
+                    g.fillStyle(0xff0000, 1); g.fillCircle(7, 14, 2); g.fillCircle(17, 14, 2);
+                },
+                26: (g) => { // Raichu
+                    g.fillStyle(0xf08030, 1); g.fillCircle(12, 12, 9);
+                    g.fillStyle(0xf08030, 1); g.fillRect(3, 1, 5, 9); g.fillRect(16, 1, 5, 9);
+                    g.fillStyle(0xffde00, 1); g.fillCircle(7, 14, 2); g.fillCircle(17, 14, 2);
+                },
+                4: (g) => { // Charmander
+                    g.fillStyle(0xf08030, 1); g.fillCircle(12, 12, 8);
+                    g.fillStyle(0xffde00, 1); g.fillCircle(12, 14, 5);
+                    g.fillStyle(0xff4500, 1); g.fillCircle(20, 12, 3); // Llama cola
+                },
+                7: (g) => { // Squirtle
+                    g.fillStyle(0x6890f0, 1); g.fillCircle(12, 12, 8);
+                    g.fillStyle(0xb8a038, 1); g.fillRect(7, 8, 10, 10); // Caparazón
+                },
+                10: (g) => { // Caterpie
+                    g.fillStyle(0x78c850, 1); g.fillCircle(8, 14, 5); g.fillCircle(14, 12, 6);
+                    g.fillStyle(0xff0000, 1); g.fillRect(16, 8, 3, 4); // Antena
+                },
+                16: (g) => { // Pidgey
+                    g.fillStyle(0xa890f0, 1); g.fillCircle(12, 12, 8);
+                    g.fillStyle(0xf08030, 1); g.fillRect(17, 11, 5, 3); // Pico
+                },
+                19: (g) => { // Rattata
+                    g.fillStyle(0xa854a8, 1); g.fillCircle(12, 13, 7);
+                    g.fillStyle(0xffffff, 1); g.fillRect(17, 13, 3, 3); // Diente
+                }
+            };
+
+            for (let id in drawSpecs) {
+                let key = `poke_gfx_${id}`;
+                if (!scene.textures.exists(key)) {
+                    let g = scene.add.graphics();
+                    drawSpecs[id](g);
+                    g.generateTexture(key, 24, 24);
+                    g.destroy();
+                }
+            }
         }
 
         function drawMap(scene, route) {
-            let graphics = scene.add.graphics();
+            let g = scene.add.graphics();
             
             // Senderos de tierra
-            graphics.fillStyle(route.pathColor, 1);
-            graphics.fillRect(0, 80, 360, 30);
-            graphics.fillRect(165, 0, 30, 190);
+            g.fillStyle(route.pathColor, 1);
+            g.fillRect(0, 85, 360, 30);
+            g.fillRect(165, 0, 30, 200);
 
-            // Parches de césped alto
-            graphics.fillStyle(route.grassColor, 1);
-            graphics.fillRect(25, 20, 80, 45);
-            graphics.fillRect(240, 125, 80, 45);
+            // Zonas de hierba alta
+            g.fillStyle(route.grassColor, 1);
+            g.fillRect(20, 20, 85, 50);
+            g.fillRect(240, 125, 85, 50);
 
-            // Centro Pokémon / Depot en el mapa
-            graphics.fillStyle(0xcc0000, 1);
-            graphics.fillRect(290, 15, 55, 35);
-            graphics.fillStyle(0xffffff, 1);
-            graphics.fillRect(310, 25, 15, 15);
+            // Centro Pokémon / Depot
+            g.fillStyle(0xcc1111, 1);
+            g.fillRect(285, 12, 60, 40);
+            g.fillStyle(0xffffff, 1);
+            g.fillRect(310, 24, 10, 16);
+            g.fillRect(307, 27, 16, 10);
 
-            // Bordes de Árboles
-            graphics.fillStyle(route.treeColor, 1);
+            // Árboles perimetrales
+            g.fillStyle(route.treeColor, 1);
             for(let x = 12; x <= 348; x += 24) {
-                graphics.fillCircle(x, 10, 14);
-                graphics.fillCircle(x, 180, 14);
+                g.fillCircle(x, 10, 14);
+                g.fillCircle(x, 190, 14);
             }
-            for(let y = 12; y <= 180; y += 24) {
-                graphics.fillCircle(10, y, 14);
-                graphics.fillCircle(350, y, 14);
+            for(let y = 12; y <= 190; y += 24) {
+                g.fillCircle(10, y, 14);
+                g.fillCircle(350, y, 14);
             }
         }
 
@@ -287,8 +402,8 @@
             if (enemyHpBar) enemyHpBar.destroy();
 
             let randomPoke = allPokemonSpecies[Math.floor(Math.random() * allPokemonSpecies.length)];
-            let randomX = Math.floor(Math.random() * 100) + 210;
-            let randomY = Math.floor(Math.random() * 70) + 60;
+            let randomX = Math.floor(Math.random() * 90) + 220;
+            let randomY = Math.floor(Math.random() * 60) + 70;
 
             activeEnemy = { ...randomPoke, currentHp: randomPoke.hp, maxHp: randomPoke.hp };
 
@@ -298,41 +413,41 @@
                 playerData.pokedex[randomPoke.id].seen++;
             }
 
-            // Usar sprite oficial a color del enemigo salvaje
-            enemySprite = scene.physics.add.sprite(randomX, randomY, `poke${randomPoke.id}`);
-            enemySprite.setScale(1.1);
+            enemySprite = scene.physics.add.sprite(randomX, randomY, `poke_gfx_${randomPoke.id}`);
 
             enemyHpBar = scene.add.graphics();
             updateEnemyHpBar();
 
-            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} salvaje apareció en el mapa!`;
+            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} salvaje apareció!`;
             updateUI();
         }
 
         function updateEnemyHpBar() {
             if (!enemyHpBar || !enemySprite || !activeEnemy) return;
             enemyHpBar.clear();
-            enemyHpBar.fillStyle(0x000000, 0.7);
-            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 26, 36, 5);
+            enemyHpBar.fillStyle(0x000000, 0.8);
+            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 20, 36, 5);
 
             let pct = Math.max(0, activeEnemy.currentHp / activeEnemy.maxHp);
-            enemyHpBar.fillStyle(pct > 0.4 ? 0x00ff00 : 0xff0000, 1);
-            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 26, 36 * pct, 5);
+            enemyHpBar.fillStyle(pct > 0.4 ? 0x28a745 : 0xd32f2f, 1);
+            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 20, 36 * pct, 5);
         }
 
         function setupDpadButton(id, direction) {
             let btn = document.getElementById(id);
             if(!btn) return;
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); moveState[direction] = true; });
-            btn.addEventListener('touchend', (e) => { e.preventDefault(); moveState[direction] = false; });
-            btn.addEventListener('mousedown', () => { moveState[direction] = true; });
-            btn.addEventListener('mouseup', () => { moveState[direction] = false; });
+            let start = (e) => { e.preventDefault(); moveState[direction] = true; };
+            let end = (e) => { e.preventDefault(); moveState[direction] = false; };
+            btn.addEventListener('touchstart', start);
+            btn.addEventListener('touchend', end);
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
         }
 
         function update() {
             if (!trainer) return;
             trainer.setVelocity(0);
-            let speed = 125;
+            let speed = 130;
 
             if (cursors.left.isDown || moveState.left) { trainer.setVelocityX(-speed); }
             else if (cursors.right.isDown || moveState.right) { trainer.setVelocityX(speed); }
@@ -340,20 +455,309 @@
             if (cursors.up.isDown || moveState.up) { trainer.setVelocityY(-speed); }
             else if (cursors.down.isDown || moveState.down) { trainer.setVelocityY(speed); }
 
+            // Seguimiento suave del Pokémon Acompañante
             if (petPokemon && trainer) {
-                petPokemon.x = Phaser.Math.Linear(petPokemon.x, trainer.x - 22, 0.1);
-                petPokemon.y = Phaser.Math.Linear(petPokemon.y, trainer.y, 0.1);
+                petPokemon.x = Phaser.Math.Linear(petPokemon.x, trainer.x - 20, 0.12);
+                petPokemon.y = Phaser.Math.Linear(petPokemon.y, trainer.y, 0.12);
             }
 
-            if (trainer.x > 270 && trainer.y < 55) {
-                document.getElementById('depot-status').innerText = "Depot: ¡En zona segura!";
+            // Control de Zona Segura (Depot / Centro Pokémon)
+            if (trainer.x > 265 && trainer.y < 60) {
+                document.getElementById('depot-status').innerText = "Depot: ¡Zona Segura!";
+                document.getElementById('depot-status').style.color = "#28a745";
             } else {
                 document.getElementById('depot-status').innerText = "Depot: Explorando";
+                document.getElementById('depot-status').style.color = "#ffca28";
             }
 
             if (enemySprite && activeEnemy) {
                 updateEnemyHpBar();
             }
+
+            // Emitir posición multijugador
+            broadcastPosition();
         }
 
-        function castSpell
+        // --- SISTEMA MULTIJUGADOR VIRTUAL DE SERVIDOR ---
+        function setupNetwork() {
+            try {
+                broadcastChannel = new BroadcastChannel('poketibia_online_net');
+                broadcastChannel.onmessage = (event) => {
+                    let msg = event.data;
+                    if (msg.id === myPlayerId) return;
+
+                    if (msg.type === 'POS' && sceneContext) {
+                        if (!remotePlayers[msg.id]) {
+                            let pSprite = sceneContext.add.sprite(msg.x, msg.y, 'trainer_gfx');
+                            let pName = sceneContext.add.text(msg.x, msg.y - 20, msg.name, { fontSize: '9px', fill: '#00ff00' }).setOrigin(0.5);
+                            remotePlayers[msg.id] = { sprite: pSprite, label: pName, lastSeen: Date.now() };
+                        } else {
+                            remotePlayers[msg.id].sprite.x = msg.x;
+                            remotePlayers[msg.id].sprite.y = msg.y;
+                            remotePlayers[msg.id].label.x = msg.x;
+                            remotePlayers[msg.id].label.y = msg.y - 20;
+                            remotePlayers[msg.id].lastSeen = Date.now();
+                        }
+                    }
+                };
+            } catch (e) {
+                console.log("BroadcastChannel no soportado en este navegador.");
+            }
+
+            // Limpieza de jugadores desconectados
+            setInterval(() => {
+                let now = Date.now();
+                let count = 1;
+                for (let id in remotePlayers) {
+                    if (now - remotePlayers[id].lastSeen > 3500) {
+                        remotePlayers[id].sprite.destroy();
+                        remotePlayers[id].label.destroy();
+                        delete remotePlayers[id];
+                    } else {
+                        count++;
+                    }
+                }
+                document.getElementById('online-count').innerText = `Online: ${count}`;
+            }, 1000);
+        }
+
+        function broadcastPosition() {
+            if (!trainer || !broadcastChannel) return;
+            broadcastChannel.postMessage({
+                type: 'POS',
+                id: myPlayerId,
+                name: 'Entrenador',
+                x: trainer.x,
+                y: trainer.y
+            });
+        }
+
+        // --- COMBATE Y LÓGICA DE JUEGO ---
+        function castSpell(type) {
+            let now = Date.now();
+            if (now - lastAttackTime < 650) {
+                document.getElementById('battle-log').innerText = `⏳ ¡Enfriamiento de ataque!`;
+                return;
+            }
+            lastAttackTime = now;
+            triggerAttack(type);
+        }
+
+        function triggerAttack(type = 'fast') {
+            if (!activeEnemy || !sceneContext) return;
+            let activePoke = playerData.team[playerData.activePokeIndex];
+
+            if (activePoke.hp <= 0) {
+                alert(`¡${activePoke.name} no tiene vida! Cúralo en el Centro Pokémon.`);
+                return;
+            }
+
+            let damage = type === 'heavy' ? activePoke.atk * 1.8 : activePoke.atk;
+            activeEnemy.currentHp -= Math.floor(damage);
+            activePoke.hp = Math.max(0, activePoke.hp - 5);
+            updateEnemyHpBar();
+
+            if (activeEnemy.currentHp <= 0) {
+                playerData.inventory[activeEnemy.loot] = (playerData.inventory[activeEnemy.loot] || 0) + 1;
+                playerData.coins += 10;
+
+                activePoke.exp += 45;
+                if (activePoke.exp >= activePoke.maxExp) {
+                    activePoke.exp -= activePoke.maxExp;
+                    activePoke.level++;
+                    activePoke.atk += 5;
+                    activePoke.maxHp += 12;
+                    activePoke.hp = activePoke.maxHp;
+                    alert(`🎉 ¡Tu ${activePoke.name} subió al Nivel ${activePoke.level}!`);
+
+                    if (activePoke.level >= 10 && activePoke.evoId) {
+                        alert(`✨ ¡Tu ${activePoke.name} evolucionó a ${activePoke.evoName}!`);
+                        activePoke.id = activePoke.evoId;
+                        activePoke.name = activePoke.evoName;
+                        activePoke.evoId = null;
+                        if (petPokemon) petPokemon.setTexture(`poke_gfx_${activePoke.id}`);
+                    }
+                }
+
+                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste al ${activeEnemy.name}!`;
+                spawnEnemyInMap(sceneContext);
+            } else {
+                document.getElementById('battle-log').innerText = `⚡ ${activePoke.name} atacó. Enemigo HP: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
+            }
+            updateUI();
+        }
+
+        function tryCatch() {
+            if (!activeEnemy) return;
+            if (playerData.pokeballs <= 0) {
+                alert("¡No tienes Pokéballs! Compra más en la tienda.");
+                return;
+            }
+
+            playerData.pokeballs--;
+            let hpRatio = activeEnemy.currentHp / activeEnemy.maxHp;
+
+            if (hpRatio < 0.6 || Math.random() < 0.5) {
+                alert(`🎉 ¡Atrapaste un ${activeEnemy.name}!`);
+                
+                if (playerData.pokedex[activeEnemy.id]) {
+                    playerData.pokedex[activeEnemy.id].caught++;
+                }
+
+                let newPoke = {
+                    id: activeEnemy.id,
+                    name: activeEnemy.name,
+                    level: 3,
+                    exp: 0,
+                    maxExp: 80,
+                    hp: activeEnemy.maxHp,
+                    maxHp: activeEnemy.maxHp,
+                    atk: 18,
+                    evoId: activeEnemy.id === 25 ? 26 : null,
+                    evoName: activeEnemy.id === 25 ? "Raichu" : null
+                };
+
+                if (playerData.team.length < 3) {
+                    playerData.team.push(newPoke);
+                } else {
+                    playerData.box.push(newPoke);
+                    alert(`📦 Equipo lleno (máximo 3). ${activeEnemy.name} fue a la Caja.`);
+                }
+
+                spawnEnemyInMap(sceneContext);
+            } else {
+                alert(`❌ ¡El ${activeEnemy.name} se escapó de la Pokéball!`);
+            }
+            updateUI();
+        }
+
+        function selectPoke(index) {
+            if (playerData.team[index].hp <= 0) {
+                alert("¡Este Pokémon está debilitado!");
+                return;
+            }
+            playerData.activePokeIndex = index;
+            let activePoke = playerData.team[index];
+            if (petPokemon && sceneContext) {
+                petPokemon.setTexture(`poke_gfx_${activePoke.id}`);
+            }
+            updateUI();
+        }
+
+        function sendToTeam(boxIndex) {
+            if (playerData.team.length >= 3) {
+                alert("Tu equipo está lleno. Pasa uno a la reserva primero.");
+                return;
+            }
+            let poke = playerData.box.splice(boxIndex, 1)[0];
+            playerData.team.push(poke);
+            updateUI();
+        }
+
+        function healTeam() {
+            if (playerData.coins >= 15) {
+                playerData.coins -= 15;
+                playerData.team.forEach(p => { p.hp = p.maxHp; });
+                updateUI();
+                alert("🏥 ¡Centro Pokémon: Tu equipo ha sido restaurado!");
+            } else {
+                alert("¡Necesitas $15 PokéDollars!");
+            }
+        }
+
+        function buyBall() {
+            if (playerData.coins >= 10) {
+                playerData.coins -= 10;
+                playerData.pokeballs++;
+                updateUI();
+            } else {
+                alert("¡Faltan dinero ($10)!");
+            }
+        }
+
+        function sellLoot() {
+            let total = 0;
+            const prices = { 'Seda': 8, 'Pluma': 12, 'Colmillo': 10, 'Baya': 15, 'Escama': 20, 'Caparazón': 20 };
+            for (let item in playerData.inventory) {
+                total += playerData.inventory[item] * (prices[item] || 5);
+            }
+            if (total > 0) {
+                playerData.coins += total;
+                playerData.inventory = {};
+                updateUI();
+                alert(`💰 ¡Loot vendido por $${total} PokéDollars!`);
+            } else {
+                alert("No tienes objetos para vender.");
+            }
+        }
+
+        function changeRoute() {
+            playerData.routeIndex = (playerData.routeIndex + 1) % routes.length;
+            let r = routes[playerData.routeIndex];
+            document.getElementById('zone-name').innerText = r.name;
+            if (sceneContext) {
+                sceneContext.cameras.main.setBackgroundColor(r.bg);
+                sceneContext.children.removeAll();
+                
+                generateAllPixelTextures(sceneContext);
+                drawMap(sceneContext, r);
+
+                trainer = sceneContext.physics.add.sprite(90, 100, 'trainer_gfx');
+                trainer.setCollideWorldBounds(true);
+
+                let activePoke = playerData.team[playerData.activePokeIndex];
+                petPokemon = sceneContext.physics.add.sprite(65, 100, `poke_gfx_${activePoke.id}`);
+
+                spawnEnemyInMap(sceneContext);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('coins').innerText = playerData.coins;
+            document.getElementById('pokeballs').innerText = playerData.pokeballs;
+
+            let teamHTML = "";
+            playerData.team.forEach((poke, idx) => {
+                let active = idx === playerData.activePokeIndex ? "active" : "";
+                let hpPct = (poke.hp / poke.maxHp) * 100;
+                teamHTML += `
+                    <div class="poke-slot ${active}" onclick="selectPoke(${idx})">
+                        <b>${poke.name}</b> (Lv.${poke.level})<br>
+                        <div class="bar-bg"><div class="bar-fill hp-fill" style="width:${hpPct}%"></div></div>
+                        <span style="font-size:9px;">${poke.hp}/${poke.maxHp} HP</span>
+                    </div>
+                `;
+            });
+            document.getElementById('team-container').innerHTML = teamHTML;
+
+            let pokedexHTML = "";
+            allPokemonSpecies.forEach((sp, index) => {
+                let entry = playerData.pokedex[sp.id];
+                let numStr = `#${String(index + 1).padStart(3, '0')}`;
+                if (entry) {
+                    pokedexHTML += `<div>✔️ ${numStr} <b>${sp.name}</b> | Visto: ${entry.seen} | Atrapado: ${entry.caught}</div>`;
+                } else {
+                    pokedexHTML += `<div>❓ ${numStr} ???</div>`;
+                }
+            });
+
+            if (playerData.box && playerData.box.length > 0) {
+                pokedexHTML += `<hr style="border-color:#383848; margin:4px 0;"><b>📦 Caja de Colección:</b><br>`;
+                playerData.box.forEach((bPoke, bIdx) => {
+                    pokedexHTML += `<button onclick="sendToTeam(${bIdx})" style="margin:2px; background:#1565c0; color:#fff; border:none; padding:3px 6px; border-radius:4px; cursor:pointer;">Sacar a ${bPoke.name}</button> `;
+                });
+            }
+            document.getElementById('pokedex-list').innerHTML = pokedexHTML;
+
+            let inv = [];
+            for (let i in playerData.inventory) {
+                if(playerData.inventory[i] > 0) inv.push(`${i} x${playerData.inventory[i]}`);
+            }
+            document.getElementById('inventory-list').innerHTML = inv.length ? inv.join(', ') : "Vacío";
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
+```
