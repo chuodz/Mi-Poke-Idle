@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia MMO - Box & Team Swap</title>
+    <title>PokeTibia MMO - Stable Canvas</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -163,28 +163,4 @@
             <button class="menu-btn" onclick="toggleModal('shop-modal')">🛒 Tienda</button>
             <button class="menu-btn" onclick="toggleModal('pokedex-modal')">📖 Pokédex</button>
             <button class="menu-btn" onclick="toggleModal('inventory-modal')">🎒 Inventario</button>
-            <button class="menu-btn" onclick="toggleModal('box-modal')">📦 Caja</button>
-        </div>
-        <button class="menu-btn btn-shop" style="width:100%; margin-top:2px;" onclick="toggleModal('chat-modal')">💬 Chat Global & Privado</button>
-
-        <!-- D-PAD TÁCTIL -->
-        <div class="dpad-container">
-            <button class="dpad-btn" id="btn-up">⬆️</button>
-            <div class="dpad-row">
-                <button class="dpad-btn" id="btn-left">⬅️</button>
-                <button class="dpad-btn" id="btn-down">⬇️</button>
-                <button class="dpad-btn" id="btn-right">➡️</button>
-            </div>
-        </div>
-
-        <div class="box-section">
-            <b>📜 Misión Activa:</b> <span id="quest-text">Caza Pokémon (0/10)</span>
-        </div>
-    </div>
-
-    <!-- VENTANAS FLOTANTES -->
-    <div id="shop-modal" class="modal-window">
-        <div class="modal-header"><span>🛒 PokéMart (Tienda & Mercado)</span><button class="close-btn" onclick="toggleModal('shop-modal')">X</button></div>
-        <div class="shop-item-row"><span>🔴 Pokéball ($10)</span><button class="buy-action-btn" onclick="buyItem('pokeballs', 1, 10)">Comprar</button></div>
-        <div class="shop-item-row"><span>🔵 Great Ball ($25)</span><button class="buy-action-btn" onclick="buyItem('greatballs', 1, 25)">Comprar</button></div>
-        <div
+            <button class="menu-btn" onclick="toggleModal('box
