@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2D World</title>
-    <!-- Cargamos el motor gratuito Phaser.js desde CDN -->
+    <title>PokeTibia 2D World - Controles Móviles</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -14,7 +13,7 @@
             text-align: center; 
             font-family: Arial, sans-serif; 
         }
-        h1 { color: #ffcb05; font-size: 20px; margin: 10px 0; }
+        h1 { color: #ffcb05; font-size: 18px; margin: 8px 0; }
         #game-container { 
             display: inline-block; 
             border: 3px solid #ffcb05; 
@@ -22,29 +21,59 @@
             overflow: hidden; 
             box-shadow: 0 0 15px rgba(255, 203, 5, 0.3);
         }
-        .controls-hint { font-size: 13px; color: #aaa; margin-top: 8px; }
+        .dpad-container {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .dpad-row {
+            display: flex;
+        }
+        .dpad-btn {
+            width: 60px;
+            height: 60px;
+            background: #e3350d;
+            color: white;
+            font-size: 20px;
+            border: 2px solid #ffcb05;
+            border-radius: 8px;
+            margin: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .dpad-btn:active {
+            background: #b32305;
+        }
     </style>
 </head>
 <body>
 
     <h1>PokeTibia 2D World</h1>
     <div id="game-container"></div>
-    <div class="controls-hint">Usa las flechas del teclado para moverte por el mapa</div>
+
+    <!-- CONTROLES TÁCTILES EN PANTALLA -->
+    <div class="dpad-container">
+        <button class="dpad-btn" id="btn-up">⬆️</button>
+        <div class="dpad-row">
+            <button class="dpad-btn" id="btn-left">⬅️</button>
+            <button class="dpad-btn" id="btn-down">⬇️</button>
+            <button class="dpad-btn" id="btn-right">➡️</button>
+        </div>
+    </div>
 
     <script>
-        // Configuración principal del motor Phaser
         const config = {
             type: Phaser.AUTO,
-            width: 400,
-            height: 300,
+            width: 380,
+            height: 260,
             parent: 'game-container',
-            backgroundColor: '#2d4d2d', // Color verde estilo césped temporal
+            backgroundColor: '#2d4d2d',
             physics: {
                 default: 'arcade',
-                arcade: { 
-                    gravity: { y: 0 }, 
-                    debug: false 
-                }
+                arcade: { gravity: { y: 0 }, debug: false }
             },
             scene: {
                 preload: preload,
@@ -56,37 +85,54 @@
         const game = new Phaser.Game(config);
         let player;
         let cursors;
+        let moveState = { left: false, right: false, up: false, down: false };
 
         function preload() {
-            // Usamos un sprite temporal gratuito de la PokeAPI para tu personaje (ej. Pikachu o Entrenador)
             this.load.image('player', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png');
         }
 
         function create() {
-            // Creamos al jugador en el centro del mapa
-            player = this.physics.add.sprite(200, 150, 'player');
+            player = this.physics.add.sprite(190, 130, 'player');
             player.setCollideWorldBounds(true);
             player.setScale(1.2);
 
-            // Activamos los cursores del teclado
             cursors = this.input.keyboard.createCursorKeys();
+
+            // Configurar eventos táctiles para los botones en pantalla
+            setupDpadButton('btn-left', 'left');
+            setupDpadButton('btn-right', 'right');
+            setupDpadButton('btn-up', 'up');
+            setupDpadButton('btn-down', 'down');
+        }
+
+        function setupDpadButton(id, direction) {
+            let btn = document.getElementById(id);
+            
+            // Táctil (Móvil)
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); moveState[direction] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); moveState[direction] = false; });
+            
+            // Ratón (PC)
+            btn.addEventListener('mousedown', () => { moveState[direction] = true; });
+            btn.addEventListener('mouseup', () => { moveState[direction] = false; });
+            btn.addEventListener('mouseleave', () => { moveState[direction] = false; });
         }
 
         function update() {
-            // Reiniciar velocidad en cada fotograma
             player.setVelocity(0);
 
-            // Movimiento direccional fluido
-            if (cursors.left.isDown) {
-                player.setVelocityX(-140);
-            } else if (cursors.right.isDown) {
-                player.setVelocityX(140);
+            let speed = 140;
+
+            if (cursors.left.isDown || moveState.left) {
+                player.setVelocityX(-speed);
+            } else if (cursors.right.isDown || moveState.right) {
+                player.setVelocityX(speed);
             }
 
-            if (cursors.up.isDown) {
-                player.setVelocityY(-140);
-            } else if (cursors.down.isDown) {
-                player.setVelocityY(140);
+            if (cursors.up.isDown || moveState.up) {
+                player.setVelocityY(-speed);
+            } else if (cursors.down.isDown || moveState.down) {
+                player.setVelocityY(speed);
             }
         }
     </script>
