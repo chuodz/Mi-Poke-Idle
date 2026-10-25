@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2D MMORPG Online - Stable Render</title>
+    <title>PokeTibia 2D MMORPG Online - Mobile Stable</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -140,7 +140,7 @@
 
     <div class="game-panel">
         <h1>PokeTibia 2D MMORPG Online</h1>
-        <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">60</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
+        <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">100</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
 
         <!-- EQUIPO ACTIVO -->
         <div id="team-container" class="team-bar"></div>
@@ -249,7 +249,7 @@
             return pokemonNames[id] || `Pokémon #${id}`;
         }
 
-        let savedData = localStorage.getItem('poketibia_save_v11');
+        let savedData = localStorage.getItem('poketibia_save_v12');
         let playerData = savedData ? JSON.parse(savedData) : {
             coins: 100,
             pokeballs: 5,
@@ -284,7 +284,7 @@
         ];
 
         function saveGame() {
-            localStorage.setItem('poketibia_save_v11', JSON.stringify(playerData));
+            localStorage.setItem('poketibia_save_v12', JSON.stringify(playerData));
         }
 
         const routes = [
@@ -350,6 +350,7 @@
         let moveState = { left: false, right: false, up: false, down: false };
 
         function preload() {
+            // Precarga segura asegurando URLs directas y estables
             popularIds.forEach(id => {
                 this.load.image(`poke_${id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`);
             });
@@ -368,7 +369,8 @@
             trainer.setCollideWorldBounds(true);
 
             let activePoke = playerData.team[playerData.activePokeIndex];
-            petPokemon = this.physics.add.sprite(65, 95, `poke_${activePoke.id}`);
+            let activeTexture = this.textures.exists(`poke_${activePoke.id}`) ? `poke_${activePoke.id}` : 'trainer_gfx';
+            petPokemon = this.physics.add.sprite(65, 95, activeTexture);
             petPokemon.setScale(0.85);
 
             cursors = this.input.keyboard.createCursorKeys();
@@ -512,16 +514,14 @@
                 playerData.pokedex[activeEnemy.id].seen++;
             }
 
-            scene.load.image(`poke_${activeEnemy.id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${activeEnemy.id}.png`);
-            scene.load.once('complete', () => {
-                if (!sceneContext) return;
-                enemySprite = scene.physics.add.sprite(randomX, randomY, `poke_${activeEnemy.id}`);
-                enemySprite.setScale(0.85);
+            let textureKey = `poke_${activeEnemy.id}`;
+            let fallbackTex = scene.textures.exists(textureKey) ? textureKey : 'trainer_gfx';
 
-                enemyHpBar = scene.add.graphics();
-                updateEnemyHpBar();
-            });
-            scene.load.start();
+            enemySprite = scene.physics.add.sprite(randomX, randomY, fallbackTex);
+            enemySprite.setScale(0.85);
+
+            enemyHpBar = scene.add.graphics();
+            updateEnemyHpBar();
 
             document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} (Lv.${activeEnemy.level}) salvaje apareció!`;
             updateUI();
@@ -535,4 +535,404 @@
             enemyHpBar.fillRect(enemySprite.x - 22, enemySprite.y - 24, 44, 5);
 
             let pct = Math.max(0, Number(activeEnemy.currentHp) / Number(activeEnemy.maxHp));
-            enemyHpBar.fillStyle(pct > 0.4 ? 0x00ff00 : 0xff0000, 
+            enemyHpBar.fillStyle(pct > 0.4 ? 0x00ff00 : 0xff0000, 1);
+            enemyHpBar.fillRect(enemySprite.x - 22, enemySprite.y - 24, 44 * pct, 5);
+        }
+
+        function setupDpadButton(id, direction) {
+            let btn = document.getElementById(id);
+            if(!btn) return;
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); moveState[direction] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); moveState[direction] = false; });
+            btn.addEventListener('mousedown', () => { moveState[direction] = true; });
+            btn.addEventListener('mouseup', () => { moveState[direction] = false; });
+        }
+
+        const myId = 'player_' + Math.random().toString(36).substr(2, 6);
+        function setupOnlineServer() {
+            if (window.BroadcastChannel) {
+                broadcastChannel = new BroadcastChannel('poketibia_mmo_channel');
+                broadcastChannel.onmessage = (event) => {
+                    let data = event.data;
+                    if (data.id === myId) return;
+
+                    if (data.type === 'move') {
+                        if (!remotePlayers[data.id] && sceneContext) {
+                            remotePlayers[data.id] = sceneContext.physics.add.sprite(data.x, data.y, 'trainer_gfx');
+                        } else if (remotePlayers[data.id]) {
+                            remotePlayers[data.id].x = data.x;
+                            remotePlayers[data.id].y = data.y;
+                        }
+                    } else if (data.type === 'leave') {
+                        if (remotePlayers[data.id]) {
+                            remotePlayers[data.id].destroy();
+                            delete remotePlayers[data.id];
+                        }
+                    } else if (data.type === 'chat') {
+                        let chatBox = document.getElementById('chat-messages');
+                        if (data.mode === 'global') {
+                            chatBox.innerHTML += `<div style="color:#00ffcc;">[${data.time}] [Global] ${data.sender}: ${data.text}</div>`;
+                        } else if (data.target === 'Tú' || data.target === 'Jugador') {
+                            chatBox.innerHTML += `<div style="color:#ff77ff;">[${data.time}] [Susurro de ${data.sender}]: ${data.text}</div>`;
+                        }
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
+                    updateOnlineCount();
+                };
+            }
+        }
+
+        function updateOnlineCount() {
+            let count = Object.keys(remotePlayers).length + 1;
+            document.getElementById('online-players').innerText = count;
+        }
+
+        function update() {
+            if (!trainer) return;
+            trainer.setVelocity(0);
+            let speed = 125;
+
+            if (cursors.left.isDown || moveState.left) { trainer.setVelocityX(-speed); }
+            else if (cursors.right.isDown || moveState.right) { trainer.setVelocityX(speed); }
+
+            if (cursors.up.isDown || moveState.up) { trainer.setVelocityY(-speed); }
+            else if (cursors.down.isDown || moveState.down) { trainer.setVelocityY(speed); }
+
+            if (petPokemon && trainer) {
+                petPokemon.x = Phaser.Math.Linear(petPokemon.x, trainer.x - 22, 0.1);
+                petPokemon.y = Phaser.Math.Linear(petPokemon.y, trainer.y, 0.1);
+            }
+
+            if (broadcastChannel && trainer && trainer.body && (trainer.body.velocity.x !== 0 || trainer.body.velocity.y !== 0)) {
+                broadcastChannel.postMessage({ id: myId, type: 'move', x: trainer.x, y: trainer.y });
+            }
+
+            if (trainer.x > 260 && trainer.y < 50) {
+                document.getElementById('depot-status').innerText = "Depot: ¡Seguro!";
+            } else {
+                document.getElementById('depot-status').innerText = "Depot: Explorando";
+            }
+
+            if (enemySprite && activeEnemy) {
+                updateEnemyHpBar();
+            }
+        }
+
+        function spawnSpellEffect(type) {
+            if (!sceneContext || !petPokemon || !enemySprite) return;
+            let color = type === 'heavy' ? 0xff3300 : 0xffea00;
+            let size = type === 'heavy' ? 9 : 6;
+            
+            let projectile = sceneContext.add.circle(petPokemon.x, petPokemon.y, size, color, 1);
+            sceneContext.tweens.add({
+                targets: projectile,
+                x: enemySprite.x,
+                y: enemySprite.y,
+                duration: 180,
+                onComplete: () => {
+                    projectile.destroy();
+                    let flash = sceneContext.add.circle(enemySprite.x, enemySprite.y, 18, 0xffffff, 0.95);
+                    sceneContext.tweens.add({
+                        targets: flash,
+                        scale: 2.2,
+                        alpha: 0,
+                        duration: 150,
+                        onComplete: () => flash.destroy()
+                    });
+                }
+            });
+        }
+
+        function castSpell(type) {
+            let now = Date.now();
+            if (now - lastAttackTime < 700) {
+                document.getElementById('battle-log').innerText = `⏳ ¡Enfriamiento activo!`;
+                return;
+            }
+            lastAttackTime = now;
+            spawnSpellEffect(type);
+            triggerAttack(type);
+        }
+
+        function triggerAttack(type = 'fast') {
+            if (!activeEnemy || !sceneContext) return;
+            let activePoke = playerData.team[playerData.activePokeIndex];
+
+            if (activePoke.hp <= 0) {
+                alert(`¡${activePoke.name} está debilitado! Usa un Revivir o Poción en tu inventario.`);
+                return;
+            }
+
+            let damage = Math.floor(type === 'heavy' ? activePoke.atk * 1.3 : activePoke.atk * 0.8);
+            
+            if (isNaN(activeEnemy.currentHp)) {
+                activeEnemy.currentHp = Number(activeEnemy.maxHp);
+            }
+
+            activeEnemy.currentHp -= damage;
+            updateEnemyHpBar();
+
+            if (activeEnemy.currentHp <= 0) {
+                let lootType = Math.random() < 0.4 ? 'Pepita de Oro' : 'Polvo Estelar';
+                playerData.inventory[lootType] = (playerData.inventory[lootType] || 0) + 1;
+                playerData.coins += 25 + (activeEnemy.level * 3);
+
+                playerData.questCount++;
+                let currentGoal = questGoals[playerData.questLevel] || questGoals[questGoals.length - 1];
+                
+                if (playerData.questCount >= currentGoal.target) {
+                    playerData.coins += currentGoal.rewardCoins;
+                    playerData.pokeballs += currentGoal.rewardBalls;
+                    alert(`📜 ¡Misión Cumplida (${currentGoal.desc})!\nRecompensa: +$${currentGoal.rewardCoins} y +${currentGoal.rewardBalls} Pokéballs.`);
+                    
+                    playerData.questCount = 0;
+                    if (playerData.questLevel < questGoals.length - 1) {
+                        playerData.questLevel++;
+                    }
+                }
+
+                activePoke.exp += 60;
+                if (activePoke.exp >= activePoke.maxExp) {
+                    activePoke.exp -= activePoke.maxExp;
+                    activePoke.level++;
+                    activePoke.atk += 5;
+                    activePoke.maxHp += 15;
+                    activePoke.hp = activePoke.maxHp;
+                    alert(`🎉 ¡Tu ${activePoke.name} subió al Nivel ${activePoke.level}!`);
+                }
+
+                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste a ${activeEnemy.name}! (Loot obtenido)`;
+                saveGame();
+                spawnEnemyInMap(sceneContext);
+            } else {
+                document.getElementById('battle-log').innerText = `⚡ ${activePoke.name} atacó. ${activeEnemy.name} (Lv.${activeEnemy.level}) HP: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
+            }
+            updateUI();
+        }
+
+        function tryCatch() {
+            if (!activeEnemy) return;
+            let ballUsed = '';
+            if (playerData.ultraballs > 0) { playerData.ultraballs--; ballUsed = 'Ultra Ball'; }
+            else if (playerData.greatballs > 0) { playerData.greatballs--; ballUsed = 'Great Ball'; }
+            else if (playerData.pokeballs > 0) { playerData.pokeballs--; ballUsed = 'Pokéball'; }
+            else {
+                alert("¡No tienes Pokéballs, Great Balls ni Ultra Balls! Cómpralas en la tienda.");
+                return;
+            }
+
+            let hpRatio = activeEnemy.currentHp / activeEnemy.maxHp;
+            let catchChance = ballUsed === 'Ultra Ball' ? 0.8 : (ballUsed === 'Great Ball' ? 0.6 : 0.4);
+
+            if (hpRatio < 0.6 || Math.random() < catchChance) {
+                alert(`🎉 ¡Atrapaste a ${activeEnemy.name} (Lv.${activeEnemy.level}) con una ${ballUsed}!`);
+                if (playerData.pokedex[activeEnemy.id]) {
+                    playerData.pokedex[activeEnemy.id].caught++;
+                }
+
+                let newPoke = {
+                    id: activeEnemy.id,
+                    name: activeEnemy.name,
+                    level: activeEnemy.level,
+                    exp: 0,
+                    maxExp: 80,
+                    hp: activeEnemy.maxHp,
+                    maxHp: activeEnemy.maxHp,
+                    atk: activeEnemy.atk
+                };
+
+                if (playerData.team.length < 3) {
+                    playerData.team.push(newPoke);
+                } else {
+                    playerData.box.push(newPoke);
+                    alert(`📦 Equipo lleno. ${activeEnemy.name} fue enviado a la Caja de Colección.`);
+                }
+                saveGame();
+                spawnEnemyInMap(sceneContext);
+            } else {
+                alert(`❌ ¡${activeEnemy.name} escapó de la ${ballUsed}!`);
+            }
+            updateUI();
+        }
+
+        function buyItem(itemKey, qty, price) {
+            let totalCost = price * qty;
+            if (playerData.coins >= totalCost) {
+                playerData.coins -= totalCost;
+                playerData[itemKey] += qty;
+                updateUI();
+                saveGame();
+                alert(`🛒 ¡Compra exitosa de ${itemKey} por -$${totalCost} PokéDollars!`);
+            } else {
+                alert(`¡No tienes suficientes PokéDollars! Necesitas $${totalCost}.`);
+            }
+        }
+
+        function healTeamShop() {
+            if (playerData.coins >= 15) {
+                playerData.coins -= 15;
+                playerData.team.forEach(p => { p.hp = p.maxHp; });
+                updateUI();
+                saveGame();
+                alert("🏥 ¡Centro Pokémon: Equipo curado por completo!");
+            } else {
+                alert("¡Faltan PokéDollars ($15)!");
+            }
+        }
+
+        function usePotionItem(type) {
+            let activePoke = playerData.team[playerData.activePokeIndex];
+            if (type === 'potion' && playerData.potions > 0) {
+                if (activePoke.hp >= activePoke.maxHp) { alert("¡Vida al máximo!"); return; }
+                playerData.potions--;
+                activePoke.hp = Math.min(activePoke.maxHp, activePoke.hp + 35);
+                alert(`🧪 ¡Usaste Poción en ${activePoke.name}!`);
+            } else if (type === 'superpotion' && playerData.superpotions > 0) {
+                if (activePoke.hp >= activePoke.maxHp) { alert("¡Vida al máximo!"); return; }
+                playerData.superpotions--;
+                activePoke.hp = Math.min(activePoke.maxHp, activePoke.hp + 80);
+                alert(`🧪 ¡Usaste Super Poción en ${activePoke.name}!`);
+            } else if (type === 'revive' && playerData.revives > 0) {
+                if (activePoke.hp > 0) { alert("¡Este Pokémon no está debilitado!"); return; }
+                playerData.revives--;
+                activePoke.hp = Math.floor(activePoke.maxHp * 0.5);
+                alert(`✨ ¡Reviviste a ${activePoke.name}!`);
+            } else {
+                alert("No tienes suficientes de este objeto.");
+            }
+            updateUI();
+            saveGame();
+        }
+
+        function selectPoke(index) {
+            if (playerData.team[index].hp <= 0) {
+                alert("¡Este Pokémon está debilitado! Usa un Revivir en el inventario.");
+                return;
+            }
+            playerData.activePokeIndex = index;
+            let activePoke = playerData.team[index];
+            if (petPokemon && sceneContext) {
+                let textureKey = sceneContext.textures.exists(`poke_${activePoke.id}`) ? `poke_${activePoke.id}` : 'trainer_gfx';
+                petPokemon.setTexture(textureKey);
+            }
+            updateUI();
+            saveGame();
+        }
+
+        function swapTeamWithBox(boxIndex) {
+            let boxPoke = playerData.box[boxIndex];
+            let activePoke = playerData.team[playerData.activePokeIndex];
+
+            playerData.box[boxIndex] = activePoke;
+            playerData.team[playerData.activePokeIndex] = boxPoke;
+
+            if (petPokemon && sceneContext) {
+                let textureKey = sceneContext.textures.exists(`poke_${boxPoke.id}`) ? `poke_${boxPoke.id}` : 'trainer_gfx';
+                petPokemon.setTexture(textureKey);
+            }
+            updateUI();
+            saveGame();
+            alert(`🔄 ¡Intercambiaste a ${activePoke.name} por ${boxPoke.name} en el equipo activo!`);
+        }
+
+        function sellLoot() {
+            let total = 0;
+            for (let item in playerData.inventory) {
+                total += playerData.inventory[item] * 20;
+            }
+            if (total > 0) {
+                playerData.coins += total;
+                playerData.inventory = {};
+                updateUI();
+                saveGame();
+                alert(`💰 ¡Vendiste todo tu loot por $${total} PokéDollars!`);
+            } else {
+                alert("No tienes objetos de loot para vender.");
+            }
+        }
+
+        function changeRoute() {
+            playerData.routeIndex = ((playerData.routeIndex || 0) + 1) % routes.length;
+            let r = routes[playerData.routeIndex];
+            document.getElementById('zone-name').innerText = r.name;
+            saveGame();
+            if (sceneContext) {
+                sceneContext.cameras.main.setBackgroundColor(r.bg);
+                sceneContext.children.removeAll();
+                
+                createTrainerTexture(sceneContext);
+                drawMap(sceneContext, r);
+
+                trainer = sceneContext.physics.add.sprite(90, 95, 'trainer_gfx');
+                trainer.setCollideWorldBounds(true);
+
+                let activePoke = playerData.team[playerData.activePokeIndex];
+                let textureKey = sceneContext.textures.exists(`poke_${activePoke.id}`) ? `poke_${activePoke.id}` : 'trainer_gfx';
+                petPokemon = sceneContext.physics.add.sprite(65, 95, textureKey);
+                petPokemon.setScale(0.85);
+
+                spawnEnemyInMap(sceneContext);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('coins').innerText = playerData.coins;
+            document.getElementById('pokeballs').innerText = playerData.pokeballs + playerData.greatballs + playerData.ultraballs;
+            
+            let currentGoal = questGoals[playerData.questLevel] || questGoals[questGoals.length - 1];
+            document.getElementById('quest-text').innerText = `${currentGoal.desc} (${playerData.questCount}/${currentGoal.target})`;
+
+            let teamHTML = "";
+            playerData.team.forEach((poke, idx) => {
+                let active = idx === playerData.activePokeIndex ? "active" : "";
+                let hpPct = (poke.hp / poke.maxHp) * 100;
+                teamHTML += `
+                    <div class="poke-slot ${active}" onclick="selectPoke(${idx})">
+                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png">
+                        <b>${poke.name}</b> (Lv.${poke.level})<br>
+                        <div class="bar-bg"><div class="bar-fill hp-fill" style="width:${hpPct}%"></div></div>
+                        <span style="font-size:9px;">${poke.hp}/${poke.maxHp} HP</span>
+                    </div>
+                `;
+            });
+            document.getElementById('team-container').innerHTML = teamHTML;
+
+            let pokedexHTML = "<b>Registro Pokédex Nacional:</b><br>";
+            for (let id in playerData.pokedex) {
+                let entry = playerData.pokedex[id];
+                pokedexHTML += `<div>✔️ #${String(entry.id).padStart(3, '0')} <b>${getPokeName(entry.id)}</b> | Vistos: ${entry.seen} | Atrapados: ${entry.caught}</div>`;
+            }
+            document.getElementById('pokedex-content').innerHTML = pokedexHTML || "Aún no hay registros en la Pokédex.";
+
+            let invHTML = `<b>🔴 Pokéballs:</b> ${playerData.pokeballs}<br>`;
+            invHTML += `<b>🔵 Great Balls:</b> ${playerData.greatballs}<br>`;
+            invHTML += `<b>🟣 Ultra Balls:</b> ${playerData.ultraballs}<br><hr style="border-color:#444;">`;
+            invHTML += `<b>🧪 Pociones HP:</b> ${playerData.potions} <button onclick="usePotionItem('potion')" style="background:#28a745; color:#fff; border:none; padding:1px 4px; border-radius:3px; cursor:pointer; font-size:9px;">Usar</button><br>`;
+            invHTML += `<b>🧪 Super Pociones:</b> ${playerData.superpotions} <button onclick="usePotionItem('superpotion')" style="background:#28a745; color:#fff; border:none; padding:1px 4px; border-radius:3px; cursor:pointer; font-size:9px;">Usar</button><br>`;
+            invHTML += `<b>✨ Revivires:</b> ${playerData.revives} <button onclick="usePotionItem('revive')" style="background:#d97706; color:#fff; border:none; padding:1px 4px; border-radius:3px; cursor:pointer; font-size:9px;">Revivir</button><br><hr style="border-color:#444;"><b>Loot en Mochila:</b><br>`;
+            
+            let hasLoot = false;
+            for (let i in playerData.inventory) {
+                if(playerData.inventory[i] > 0) {
+                    invHTML += `${i} x${playerData.inventory[i]}<br>`;
+                    hasLoot = true;
+                }
+            }
+            if(!hasLoot) invHTML += "Ningún objeto de loot guardado.";
+            document.getElementById('inventory-content').innerHTML = invHTML;
+
+            let boxHTML = "<b>Caja de Colección (Intercambiar con equipo activo):</b><br>";
+            if (playerData.box && playerData.box.length > 0) {
+                playerData.box.forEach((bPoke, bIdx) => {
+                    boxHTML += `<div style="margin:3px 0; background:#333; padding:3px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;"><span>${bPoke.name} (Lv.${bPoke.level})</span> <button onclick="swapTeamWithBox(${bIdx})" style="background:#3b4cca; color:#fff; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">Intercambiar</button></div>`;
+                });
+            } else {
+                boxHTML += "<i>La caja está vacía. ¡Atrapa más Pokémon en los mapas!</i>";
+            }
+            document.getElementById('box-content').innerHTML = boxHTML;
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
