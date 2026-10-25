@@ -77,12 +77,11 @@
             cursor: pointer;
             user-select: none;
         }
-        .dpad-btn { width: 38px; height: 38px; font-size: 14px; margin: 2px; }
-        .action-btn { width: 32%; padding: 5px; margin-top: 3px; font-size: 10px; display: inline-block; }
+        .dpad-btn { width: 40px; height: 40px; font-size: 14px; margin: 2px; }
+        .action-btn { width: 31%; padding: 5px; margin-top: 3px; font-size: 10px; display: inline-block; }
         .btn-green { background: #28a745; }
         .btn-blue { background: #3b4cca; }
         .btn-orange { background: #d97706; }
-        .action-btn:hover { opacity: 0.9; }
 
         .box-section {
             background: #2a2a2a;
@@ -105,6 +104,7 @@
         <p>Balls: <b id="pokeballs">5</b> | Dollars: $<span id="coins">40</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
 
         <!-- EQUIPO ACTIVO -->
+        <p style="text-align:left; margin:2px 0;"><b>Tu Equipo Activo:</b></p>
         <div id="team-container" class="team-bar"></div>
         
         <!-- CONTENEDOR DEL JUEGO -->
@@ -112,13 +112,13 @@
 
         <p id="battle-log">¡Explora los caminos y caza en el césped alto!</p>
         
-        <!-- BARRA DE HECHIZOS Y ATAQUES TIBIA STYLE -->
+        <!-- BARRA DE HECHIZOS Y ATAQUES -->
         <div>
             <button class="action-btn btn-green" onclick="castSpell('fast')">⚡ Ataque Rápido</button>
             <button class="action-btn btn-orange" onclick="castSpell('heavy')">🔥 Rayo Fuerte</button>
             <button class="action-btn btn-blue" onclick="tryCatch()">🔴 Pokéball</button>
         </div>
-        <button class="action-btn btn-blue" style="width:100%; margin-top:3px;" onclick="changeRoute()">🗺️ Cambiar Mapa (<span id="zone-name">Ruta 1</span>)</button>
+        <button class="action-btn btn-blue" style="width:100%; margin-top:3px;" onclick="changeRoute()">🗺️ Cambiar Mapa (<span id="zone-name">Ruta 1 - Pradera</span>)</button>
 
         <!-- D-PAD TÁCTIL -->
         <div class="dpad-container">
@@ -161,7 +161,7 @@
         };
 
         const routes = [
-            { name: "Ruta 1", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25, pathColor: 0x8b5a2b },
+            { name: "Ruta 1 - Pradera", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25, pathColor: 0x8b5a2b },
             { name: "Bosque Verde", bg: 0x183b0d, treeColor: 0x0a1a05, grassColor: 0x245413, pathColor: 0x5c3a1e },
             { name: "Cueva Oscura", bg: 0x222222, treeColor: 0x111111, grassColor: 0x444444, pathColor: 0x666666 }
         ];
@@ -178,8 +178,6 @@
         let activeEnemy = null;
         let enemySprite = null;
         let enemyHpBar = null;
-        let treesGroup;
-        let depotZone;
         let lastAttackTime = 0;
 
         const config = {
@@ -199,28 +197,4 @@
             }
         };
 
-        const game = new Phaser.Game(config);
-        let sceneContext;
-        let trainer;
-        let petPokemon;
-        let cursors;
-        let moveState = { left: false, right: false, up: false, down: false };
-
-        function preload() {
-            allPokemonSpecies.forEach(p => {
-                this.load.image(`poke${p.id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`);
-            });
-            this.load.image('poke26', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/26.png');
-        }
-
-        function create() {
-            sceneContext = this;
-
-            createTrainerTexture(this);
-
-            // Grupo de árboles con colisiones físicas sólidas
-            treesGroup = this.physics.add.staticGroup();
-            drawMapWithCollisions(this, routes[0]);
-
-            // Entrenador y Colisión con árboles
-            trainer = this.physics.add.sprite(90, 95, 'trainer_sprite');
+        const game = new
