@@ -155,13 +155,14 @@
                 { id: 25, name: "Pikachu", level: 5, exp: 0, maxExp: 100, hp: 60, maxHp: 60, atk: 25, evoId: 26, evoName: "Raichu" }
             ],
             activePokeIndex: 0,
-            pokedex: {} // Registro: { id: { name, seen, caught } }
+            pokedex: {},
+            box: []
         };
 
         const routes = [
-            { name: "Ruta 1", bg: 0x2e5a1c },
-            { name: "Bosque Verde", bg: 0x183b0d },
-            { name: "Cueva Oscura", bg: 0x222222 }
+            { name: "Ruta 1", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25 },
+            { name: "Bosque Verde", bg: 0x183b0d, treeColor: 0x0a1a05, grassColor: 0x245413 },
+            { name: "Cueva Oscura", bg: 0x222222, treeColor: 0x111111, grassColor: 0x444444 }
         ];
 
         const allPokemonSpecies = [
@@ -201,7 +202,6 @@
         let moveState = { left: false, right: false, up: false, down: false };
 
         function preload() {
-            // Precargar avatares de todo el equipo y especies posibles
             allPokemonSpecies.forEach(p => {
                 this.load.image(`poke${p.id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`);
             });
@@ -213,6 +213,9 @@
 
         function create() {
             sceneContext = this;
+
+            // Dibujar árboles y decoración del mapa
+            drawMapDecoration(this, routes[0]);
 
             let activePoke = playerData.team[playerData.activePokeIndex];
             player = this.physics.add.sprite(90, 90, `poke${activePoke.id}`);
@@ -230,17 +233,36 @@
             updateUI();
         }
 
+        function drawMapDecoration(scene, route) {
+            let graphics = scene.add.graphics();
+            
+            // Zonas de césped alto
+            graphics.fillStyle(route.grassColor, 1);
+            graphics.fillRect(40, 30, 90, 50);
+            graphics.fillRect(220, 100, 90, 50);
+
+            // Bordes de Árboles
+            graphics.fillStyle(route.treeColor, 1);
+            for(let x = 15; x <= 345; x += 30) {
+                graphics.fillCircle(x, 15, 16);
+                graphics.fillCircle(x, 165, 16);
+            }
+            for(let y = 15; y <= 165; y += 30) {
+                graphics.fillCircle(15, y, 16);
+                graphics.fillCircle(345, y, 16);
+            }
+        }
+
         function spawnEnemyInMap(scene) {
             if (enemySprite) enemySprite.destroy();
             if (enemyHpBar) enemyHpBar.destroy();
 
             let randomPoke = allPokemonSpecies[Math.floor(Math.random() * allPokemonSpecies.length)];
-            let randomX = Math.floor(Math.random() * 130) + 180;
-            let randomY = Math.floor(Math.random() * 100) + 40;
+            let randomX = Math.floor(Math.random() * 120) + 190;
+            let randomY = Math.floor(Math.random() * 80) + 50;
 
             activeEnemy = { ...randomPoke, currentHp: randomPoke.hp, maxHp: randomPoke.hp };
 
-            // Registrar en Pokédex (Visto)
             if (!playerData.pokedex[randomPoke.id]) {
                 playerData.pokedex[randomPoke.id] = { name: randomPoke.name, id: randomPoke.id, seen: 1, caught: 0 };
             } else {
@@ -298,7 +320,7 @@
             let activePoke = playerData.team[playerData.activePokeIndex];
 
             if (activePoke.hp <= 0) {
-                alert(`¡${activePoke.name} está debilitado! Selecciona otro Pokémon de tu equipo.`);
+                alert(`¡${activePoke.name} está debilitado! Selecciona otro Pokémon.`);
                 return;
             }
 
@@ -310,7 +332,6 @@
                 playerData.inventory[activeEnemy.loot] = (playerData.inventory[activeEnemy.loot] || 0) + 1;
                 playerData.coins += 6;
 
-                // EXP individual del Pokémon activo
                 activePoke.exp += 40;
                 if (activePoke.exp >= activePoke.maxExp) {
                     activePoke.exp -= activePoke.maxExp;
@@ -320,7 +341,6 @@
                     activePoke.hp = activePoke.maxHp;
                     alert(`🎉 ¡Tu ${activePoke.name} subió al Nivel ${activePoke.level}!`);
 
-                    // Evolución individual
                     if (activePoke.level >= 10 && activePoke.evoId) {
                         alert(`✨ ¡Tu ${activePoke.name} evolucionó a ${activePoke.evoName}!`);
                         activePoke.id = activePoke.evoId;
@@ -330,7 +350,7 @@
                     }
                 }
 
-                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste al ${activeEnemy.name}! (+40 EXP para ${activePoke.name})`;
+                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste al ${activeEnemy.name}! (+40 EXP)`;
                 spawnEnemyInMap(sceneContext);
             } else {
                 document.getElementById('battle-log').innerText = `⚡ ${activePoke.name} atacó. Enemigo HP: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
@@ -349,14 +369,12 @@
             let hpRatio = activeEnemy.currentHp / activeEnemy.maxHp;
 
             if (hpRatio < 0.6 || Math.random() < 0.5) {
-                alert(`🎉 ¡Atrapaste a ${activeEnemy.name} con éxito! Registrado en la Pokédex.`);
+                alert(`🎉 ¡Atrapaste a ${activeEnemy.name}!`);
                 
-                // Actualizar Pokédex (Atrapado)
                 if (playerData.pokedex[activeEnemy.id]) {
                     playerData.pokedex[activeEnemy.id].caught++;
                 }
 
-                // Añadir al equipo si hay espacio (< 3), sino mandar a colección
                 let newPoke = {
                     id: activeEnemy.id,
                     name: activeEnemy.name,
@@ -373,22 +391,20 @@
                 if (playerData.team.length < 3) {
                     playerData.team.push(newPoke);
                 } else {
-                    // Guardar en la reserva de la Pokédex / Colección
-                    if (!playerData.box) playerData.box = [];
                     playerData.box.push(newPoke);
-                    alert(`📦 Tu equipo está lleno. ${activeEnemy.name} fue enviado a tu Caja de Colección.`);
+                    alert(`📦 Equipo lleno. ${activeEnemy.name} fue enviado a la Caja de Colección.`);
                 }
 
                 spawnEnemyInMap(sceneContext);
             } else {
-                alert(`❌ ¡${activeEnemy.name} escapó de la Pokéball!`);
+                alert(`❌ ¡${activeEnemy.name} escapó!`);
             }
             updateUI();
         }
 
         function selectPoke(index) {
             if (playerData.team[index].hp <= 0) {
-                alert("¡Este Pokémon está debilitado! Cúralo en la tienda.");
+                alert("¡Este Pokémon está debilitado!");
                 return;
             }
             playerData.activePokeIndex = index;
@@ -401,13 +417,13 @@
 
         function sendToTeam(boxIndex) {
             if (playerData.team.length >= 3) {
-                alert("Tu equipo activo está lleno (máximo 3). Cambia uno o libera espacio.");
+                alert("Tu equipo activo está lleno (máximo 3).");
                 return;
             }
             let poke = playerData.box.splice(boxIndex, 1)[0];
             playerData.team.push(poke);
             updateUI();
-            alert(`¡${poke.name} se unió a tu equipo activo!`);
+            alert(`¡${poke.name} se unió al equipo activo!`);
         }
 
         function healTeam() {
@@ -453,6 +469,15 @@
             document.getElementById('zone-name').innerText = r.name;
             if (sceneContext) {
                 sceneContext.cameras.main.setBackgroundColor(r.bg);
+                sceneContext.children.removeAll();
+                
+                drawMapDecoration(sceneContext, r);
+
+                let activePoke = playerData.team[playerData.activePokeIndex];
+                player = sceneContext.physics.add.sprite(90, 90, `poke${activePoke.id}`);
+                player.setCollideWorldBounds(true);
+                player.setScale(1.1);
+
                 spawnEnemyInMap(sceneContext);
             }
         }
@@ -461,7 +486,6 @@
             document.getElementById('coins').innerText = playerData.coins;
             document.getElementById('pokeballs').innerText = playerData.pokeballs;
 
-            // Renderizar Equipo Activo con su nivel independiente
             let teamHTML = "";
             playerData.team.forEach((poke, idx) => {
                 let active = idx === playerData.activePokeIndex ? "active" : "";
@@ -476,7 +500,6 @@
             });
             document.getElementById('team-container').innerHTML = teamHTML;
 
-            // Renderizar Pokédex Nacional numerada y colección
             let pokedexHTML = "";
             allPokemonSpecies.forEach((sp, index) => {
                 let entry = playerData.pokedex[sp.id];
@@ -488,24 +511,16 @@
                 }
             });
 
-            // Añadir sección de Caja de Reserva si hay Pokémon guardados
             if (playerData.box && playerData.box.length > 0) {
-                pokedexHTML += `<hr style="border-color:#444; margin:4px 0;"><b>📦 Pokémon en Colección (Toca para sacar al equipo):</b><br>`;
+                pokedexHTML += `<hr style="border-color:#444; margin:4px 0;"><b>📦 Pokémon en Colección:</b><br>`;
                 playerData.box.forEach((bPoke, bIdx) => {
                     pokedexHTML += `<button onclick="sendToTeam(${bIdx})" style="margin:2px; background:#3b4cca; color:#fff; border:none; padding:3px 6px; border-radius:3px; cursor:pointer;">Sacar a ${bPoke.name} (Lv.${bPoke.level})</button> `;
                 });
             }
             document.getElementById('pokedex-list').innerHTML = pokedexHTML;
 
-            // Inventario de Loot
             let inv = [];
             for (let i in playerData.inventory) {
                 if(playerData.inventory[i] > 0) inv.push(`${i} x${playerData.inventory[i]}`);
             }
             document.getElementById('inventory-list').innerHTML = inv.length ? inv.join(', ') : "Vacío";
-        }
-
-        updateUI();
-    </script>
-</body>
-</html>
