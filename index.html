@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2D MMORPG Online</title>
+    <title>PokeTibia 2D MMORPG Online - Expanded</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -13,18 +13,18 @@
             text-align: center; 
             font-family: Arial, sans-serif; 
         }
-        h1 { color: #ffcb05; font-size: 16px; margin: 4px 0; }
+        h1 { color: #ffcb05; font-size: 15px; margin: 3px 0; }
         .game-panel {
             max-width: 390px;
             margin: 0 auto;
             background: #1e1e1e;
             border: 2px solid #ffcb05;
             border-radius: 8px;
-            padding: 6px;
+            padding: 5px;
             box-sizing: border-box;
         }
-        p { margin: 3px 0; font-size: 11px; }
-        .bar-bg { width: 100%; background: #444; height: 7px; border-radius: 4px; overflow: hidden; margin: 2px 0; }
+        p { margin: 2px 0; font-size: 11px; }
+        .bar-bg { width: 100%; background: #444; height: 6px; border-radius: 4px; overflow: hidden; margin: 2px 0; }
         .bar-fill { height: 100%; background: #3b4cca; width: 0%; transition: width 0.3s; }
         .hp-fill { background: #28a745; }
         
@@ -35,9 +35,9 @@
             border: 2px solid #ffcb05; 
             border-radius: 6px; 
             overflow: hidden; 
-            margin: 4px auto;
+            margin: 3px auto;
             width: 360px;
-            height: 190px;
+            height: 180px;
             background: #2d4d2d;
         }
 
@@ -46,23 +46,23 @@
             justify-content: space-around;
             background: #2a2a2a;
             border-radius: 6px;
-            padding: 4px;
-            margin: 4px 0;
+            padding: 3px;
+            margin: 3px 0;
         }
         .poke-slot {
             width: 31%;
             background: #333;
             border: 1px solid #555;
             border-radius: 5px;
-            padding: 3px;
+            padding: 2px;
             cursor: pointer;
             font-size: 10px;
         }
         .poke-slot.active { border-color: #ffcb05; background: #443c15; }
-        .poke-slot img { width: 36px; height: 36px; display: block; margin: 0 auto; }
+        .poke-slot img { width: 32px; height: 32px; display: block; margin: 0 auto; }
 
         .dpad-container {
-            margin-top: 4px;
+            margin-top: 2px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -77,8 +77,8 @@
             cursor: pointer;
             user-select: none;
         }
-        .dpad-btn { width: 40px; height: 40px; font-size: 14px; margin: 2px; }
-        .action-btn { width: 31%; padding: 5px; margin-top: 3px; font-size: 10px; display: inline-block; }
+        .dpad-btn { width: 36px; height: 36px; font-size: 13px; margin: 1px; }
+        .action-btn { width: 31%; padding: 4px; margin-top: 2px; font-size: 10px; display: inline-block; }
         .btn-green { background: #28a745; }
         .btn-blue { background: #3b4cca; }
         .btn-orange { background: #d97706; }
@@ -87,24 +87,23 @@
             background: #2a2a2a;
             border: 1px solid #ffcb05;
             border-radius: 6px;
-            padding: 5px;
-            margin-top: 4px;
-            font-size: 11px;
+            padding: 4px;
+            margin-top: 3px;
+            font-size: 10px;
             text-align: left;
-            max-height: 110px;
+            max-height: 95px;
             overflow-y: auto;
         }
-        .shop-btn { padding: 2px 6px; font-size: 10px; background: #ffcb05; color: #000; font-weight: bold; border: none; border-radius: 3px; cursor: pointer; float: right; }
+        .shop-btn { padding: 2px 5px; font-size: 9px; background: #ffcb05; color: #000; font-weight: bold; border: none; border-radius: 3px; cursor: pointer; float: right; }
     </style>
 </head>
 <body>
 
     <div class="game-panel">
         <h1>PokeTibia MMORPG Online</h1>
-        <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 Dollars: $<span id="coins">40</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
+        <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">40</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
 
         <!-- EQUIPO ACTIVO -->
-        <p style="text-align:left; margin:2px 0;"><b>Tu Equipo Activo:</b></p>
         <div id="team-container" class="team-bar"></div>
         
         <!-- CONTENEDOR DEL JUEGO -->
@@ -118,7 +117,7 @@
             <button class="action-btn btn-orange" onclick="castSpell('heavy')">🔥 Rayo Fuerte</button>
             <button class="action-btn btn-blue" onclick="tryCatch()">🔴 Pokéball</button>
         </div>
-        <button class="action-btn btn-blue" style="width:100%; margin-top:3px;" onclick="changeRoute()">🗺️ Cambiar Mapa (<span id="zone-name">Ruta 1 - Pradera</span>)</button>
+        <button class="action-btn btn-blue" style="width:100%; margin-top:2px;" onclick="changeRoute()">🗺️ Cambiar Mapa (<span id="zone-name">Ruta 1 - Pradera</span>)</button>
 
         <!-- D-PAD TÁCTIL -->
         <div class="dpad-container">
@@ -127,535 +126,3 @@
                 <button class="dpad-btn" id="btn-left">⬅️</button>
                 <button class="dpad-btn" id="btn-down">⬇️</button>
                 <button class="dpad-btn" id="btn-right">➡️</button>
-            </div>
-        </div>
-
-        <!-- POKÉDEX Y COLECCIÓN -->
-        <div class="box-section">
-            <b>📖 Pokédex & Caja de Colección:</b>
-            <div id="pokedex-list" style="margin-top:2px;">Cargando...</div>
-        </div>
-
-        <!-- TIENDA E INVENTARIO -->
-        <div class="box-section">
-            <b>🎒 Loot:</b> <span id="inventory-list">Vacío</span><br>
-            <hr style="border-color:#444; margin:2px 0;">
-            <span>🏥 Curar Centro Pokémon ($15)</span><button class="shop-btn" onclick="healTeam()">Curar</button><br>
-            <div style="margin-top:2px;"><span>🔴 Comprar Pokéball ($10)</span><button class="shop-btn" onclick="buyBall()">Comprar</button></div>
-            <div style="margin-top:2px;"><span>💰 Vender Loot</span><button class="shop-btn" onclick="sellLoot()">Vender</button></div>
-        </div>
-    </div>
-
-    <script>
-        let playerData = {
-            coins: 40,
-            pokeballs: 5,
-            routeIndex: 0,
-            inventory: {},
-            team: [
-                { id: 25, name: "Pikachu", level: 5, exp: 0, maxExp: 100, hp: 60, maxHp: 60, atk: 25, evoId: 26, evoName: "Raichu" }
-            ],
-            activePokeIndex: 0,
-            pokedex: {},
-            box: []
-        };
-
-        const routes = [
-            { name: "Ruta 1 - Pradera", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25, pathColor: 0x8b5a2b },
-            { name: "Bosque Verde", bg: 0x183b0d, treeColor: 0x0a1a05, grassColor: 0x245413, pathColor: 0x5c3a1e },
-            { name: "Cueva Oscura", bg: 0x222222, treeColor: 0x111111, grassColor: 0x444444, pathColor: 0x666666 }
-        ];
-
-        const allPokemonSpecies = [
-            { id: 10, name: "Caterpie", hp: 40, loot: 'Seda', price: 8 },
-            { id: 16, name: "Pidgey", hp: 50, loot: 'Pluma', price: 12 },
-            { id: 19, name: "Rattata", hp: 45, loot: 'Colmillo', price: 10 },
-            { id: 25, name: "Pikachu", hp: 60, loot: 'Baya', price: 15 },
-            { id: 4, name: "Charmander", hp: 55, loot: 'Escama', price: 20 },
-            { id: 7, name: "Squirtle", hp: 65, loot: 'Caparazón', price: 20 },
-            { id: 26, name: "Raichu", hp: 90, loot: 'Cola Fuerte', price: 35 }
-        ];
-
-        let activeEnemy = null;
-        let enemySprite = null;
-        let enemyHpBar = null;
-        let lastAttackTime = 0;
-        let broadcastChannel = null;
-        let remotePlayers = {};
-
-        const config = {
-            type: Phaser.AUTO,
-            width: 360,
-            height: 190,
-            parent: 'game-container',
-            backgroundColor: routes[0].bg,
-            physics: {
-                default: 'arcade',
-                arcade: { gravity: { y: 0 }, debug: false }
-            },
-            scene: {
-                preload: preload,
-                create: create,
-                update: update
-            }
-        };
-
-        const game = new Phaser.Game(config);
-        let sceneContext;
-        let trainer;
-        let petPokemon;
-        let cursors;
-        let moveState = { left: false, right: false, up: false, down: false };
-
-        function preload() {}
-
-        function create() {
-            sceneContext = this;
-
-            createTrainerTexture(this);
-            loadOfficialPokemonImages(this);
-            drawMap(this, routes[0]);
-
-            // Entrenador
-            trainer = this.physics.add.sprite(90, 95, 'trainer_gfx');
-            trainer.setCollideWorldBounds(true);
-
-            // Pokémon Acompañante
-            let activePoke = playerData.team[playerData.activePokeIndex];
-            petPokemon = this.physics.add.sprite(65, 95, getSpriteKey(activePoke.id));
-            petPokemon.setScale(0.85);
-
-            cursors = this.input.keyboard.createCursorKeys();
-
-            setupDpadButton('btn-left', 'left');
-            setupDpadButton('btn-right', 'right');
-            setupDpadButton('btn-up', 'up');
-            setupDpadButton('btn-down', 'down');
-
-            setupOnlineServer();
-            spawnEnemyInMap(this);
-            updateUI();
-        }
-
-        // Carga segura de imágenes oficiales sin congelar el canvas
-        function loadOfficialPokemonImages(scene) {
-            allPokemonSpecies.forEach(poke => {
-                let key = `official_poke_${poke.id}`;
-                if (!scene.textures.exists(key)) {
-                    let img = new Image();
-                    img.crossOrigin = "anonymous";
-                    img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png`;
-                    img.onload = function() {
-                        if (scene && scene.textures) {
-                            scene.textures.addImage(key, img);
-                            refreshMapSprites();
-                        }
-                    };
-                }
-            });
-        }
-
-        function getSpriteKey(id) {
-            let key = `official_poke_${id}`;
-            if (sceneContext && sceneContext.textures.exists(key)) {
-                return key;
-            }
-            return 'trainer_gfx';
-        }
-
-        function refreshMapSprites() {
-            if (!sceneContext) return;
-            let activePoke = playerData.team[playerData.activePokeIndex];
-            if (petPokemon) {
-                let key = getSpriteKey(activePoke.id);
-                if (sceneContext.textures.exists(key)) {
-                    petPokemon.setTexture(key);
-                    petPokemon.setScale(0.85);
-                }
-            }
-            if (enemySprite && activeEnemy) {
-                let key = getSpriteKey(activeEnemy.id);
-                if (sceneContext.textures.exists(key)) {
-                    enemySprite.setTexture(key);
-                    enemySprite.setScale(0.85);
-                }
-            }
-        }
-
-        function createTrainerTexture(scene) {
-            if (scene.textures.exists('trainer_gfx')) return;
-            let g = scene.add.graphics();
-            g.fillStyle(0x3366cc, 1); g.fillRect(6, 12, 12, 12);
-            g.fillStyle(0x333333, 1); g.fillRect(7, 24, 10, 8);
-            g.fillStyle(0xffcc99, 1); g.fillCircle(12, 8, 6);
-            g.fillStyle(0xcc0000, 1); g.fillRect(4, 2, 16, 4);
-            g.generateTexture('trainer_gfx', 24, 32);
-            g.destroy();
-        }
-
-        function drawMap(scene, route) {
-            let graphics = scene.add.graphics();
-            
-            // Senderos
-            graphics.fillStyle(route.pathColor, 1);
-            graphics.fillRect(0, 80, 360, 30);
-            graphics.fillRect(165, 0, 30, 190);
-
-            // Césped
-            graphics.fillStyle(route.grassColor, 1);
-            graphics.fillRect(25, 20, 80, 45);
-            graphics.fillRect(240, 125, 80, 45);
-
-            // Centro Pokémon / Depot
-            graphics.fillStyle(0xcc0000, 1);
-            graphics.fillRect(290, 15, 55, 35);
-            graphics.fillStyle(0xffffff, 1);
-            graphics.fillRect(310, 25, 15, 15);
-
-            // Árboles
-            graphics.fillStyle(route.treeColor, 1);
-            for(let x = 12; x <= 348; x += 24) {
-                graphics.fillCircle(x, 10, 14);
-                graphics.fillCircle(x, 180, 14);
-            }
-            for(let y = 12; y <= 180; y += 24) {
-                graphics.fillCircle(10, y, 14);
-                graphics.fillCircle(350, y, 14);
-            }
-        }
-
-        function spawnEnemyInMap(scene) {
-            if (enemySprite) enemySprite.destroy();
-            if (enemyHpBar) enemyHpBar.destroy();
-
-            let randomPoke = allPokemonSpecies[Math.floor(Math.random() * allPokemonSpecies.length)];
-            let randomX = Math.floor(Math.random() * 100) + 210;
-            let randomY = Math.floor(Math.random() * 70) + 60;
-
-            activeEnemy = { ...randomPoke, currentHp: randomPoke.hp, maxHp: randomPoke.hp };
-
-            if (!playerData.pokedex[randomPoke.id]) {
-                playerData.pokedex[randomPoke.id] = { name: randomPoke.name, id: randomPoke.id, seen: 1, caught: 0 };
-            } else {
-                playerData.pokedex[randomPoke.id].seen++;
-            }
-
-            enemySprite = scene.physics.add.sprite(randomX, randomY, getSpriteKey(randomPoke.id));
-            enemySprite.setScale(0.85);
-
-            enemyHpBar = scene.add.graphics();
-            updateEnemyHpBar();
-
-            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} salvaje apareció en el mapa!`;
-            updateUI();
-        }
-
-        function updateEnemyHpBar() {
-            if (!enemyHpBar || !enemySprite || !activeEnemy) return;
-            enemyHpBar.clear();
-            enemyHpBar.fillStyle(0x000000, 0.7);
-            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 22, 36, 5);
-
-            let pct = Math.max(0, activeEnemy.currentHp / activeEnemy.maxHp);
-            enemyHpBar.fillStyle(pct > 0.4 ? 0x00ff00 : 0xff0000, 1);
-            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 22, 36 * pct, 5);
-        }
-
-        function setupDpadButton(id, direction) {
-            let btn = document.getElementById(id);
-            if(!btn) return;
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); moveState[direction] = true; });
-            btn.addEventListener('touchend', (e) => { e.preventDefault(); moveState[direction] = false; });
-            btn.addEventListener('mousedown', () => { moveState[direction] = true; });
-            btn.addEventListener('mouseup', () => { moveState[direction] = false; });
-        }
-
-        const myId = 'player_' + Math.random().toString(36).substr(2, 6);
-        function setupOnlineServer() {
-            if (window.BroadcastChannel) {
-                broadcastChannel = new BroadcastChannel('poketibia_mmo_channel');
-                broadcastChannel.onmessage = (event) => {
-                    let data = event.data;
-                    if (data.id === myId) return;
-
-                    if (data.type === 'move') {
-                        if (!remotePlayers[data.id] && sceneContext) {
-                            remotePlayers[data.id] = sceneContext.physics.add.sprite(data.x, data.y, 'trainer_gfx');
-                        } else if (remotePlayers[data.id]) {
-                            remotePlayers[data.id].x = data.x;
-                            remotePlayers[data.id].y = data.y;
-                        }
-                    } else if (data.type === 'leave') {
-                        if (remotePlayers[data.id]) {
-                            remotePlayers[data.id].destroy();
-                            delete remotePlayers[data.id];
-                        }
-                    }
-                    updateOnlineCount();
-                };
-            }
-        }
-
-        function updateOnlineCount() {
-            let count = Object.keys(remotePlayers).length + 1;
-            document.getElementById('online-players').innerText = count;
-        }
-
-        function update() {
-            if (!trainer) return;
-            trainer.setVelocity(0);
-            let speed = 125;
-
-            if (cursors.left.isDown || moveState.left) { trainer.setVelocityX(-speed); }
-            else if (cursors.right.isDown || moveState.right) { trainer.setVelocityX(speed); }
-
-            if (cursors.up.isDown || moveState.up) { trainer.setVelocityY(-speed); }
-            else if (cursors.down.isDown || moveState.down) { trainer.setVelocityY(speed); }
-
-            if (petPokemon && trainer) {
-                petPokemon.x = Phaser.Math.Linear(petPokemon.x, trainer.x - 22, 0.1);
-                petPokemon.y = Phaser.Math.Linear(petPokemon.y, trainer.y, 0.1);
-            }
-
-            if (broadcastChannel && trainer && trainer.body && (trainer.body.velocity.x !== 0 || trainer.body.velocity.y !== 0)) {
-                broadcastChannel.postMessage({ id: myId, type: 'move', x: trainer.x, y: trainer.y });
-            }
-
-            if (trainer.x > 270 && trainer.y < 55) {
-                document.getElementById('depot-status').innerText = "Depot: ¡Seguro!";
-            } else {
-                document.getElementById('depot-status').innerText = "Depot: Explorando";
-            }
-
-            if (enemySprite && activeEnemy) {
-                updateEnemyHpBar();
-            }
-        }
-
-        function castSpell(type) {
-            let now = Date.now();
-            if (now - lastAttackTime < 700) {
-                document.getElementById('battle-log').innerText = `⏳ ¡Enfriamiento activo!`;
-                return;
-            }
-            lastAttackTime = now;
-            triggerAttack(type);
-        }
-
-        function triggerAttack(type = 'fast') {
-            if (!activeEnemy || !sceneContext) return;
-            let activePoke = playerData.team[playerData.activePokeIndex];
-
-            if (activePoke.hp <= 0) {
-                alert(`¡${activePoke.name} está debilitado! Ve al Centro Pokémon.`);
-                return;
-            }
-
-            let damage = type === 'heavy' ? activePoke.atk * 1.8 : activePoke.atk;
-            activeEnemy.currentHp -= Math.floor(damage);
-            activePoke.hp = Math.max(0, activePoke.hp - 6);
-            updateEnemyHpBar();
-
-            if (activeEnemy.currentHp <= 0) {
-                playerData.inventory[activeEnemy.loot] = (playerData.inventory[activeEnemy.loot] || 0) + 1;
-                playerData.coins += 8;
-
-                activePoke.exp += 45;
-                if (activePoke.exp >= activePoke.maxExp) {
-                    activePoke.exp -= activePoke.maxExp;
-                    activePoke.level++;
-                    activePoke.atk += 6;
-                    activePoke.maxHp += 14;
-                    activePoke.hp = activePoke.maxHp;
-                    alert(`🎉 ¡Tu ${activePoke.name} subió al Nivel ${activePoke.level}!`);
-
-                    if (activePoke.level >= 10 && activePoke.evoId) {
-                        alert(`✨ ¡Tu ${activePoke.name} evolucionó a ${activePoke.evoName}!`);
-                        activePoke.id = activePoke.evoId;
-                        activePoke.name = activePoke.evoName;
-                        activePoke.evoId = null;
-                        refreshMapSprites();
-                    }
-                }
-
-                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste al ${activeEnemy.name}!`;
-                spawnEnemyInMap(sceneContext);
-            } else {
-                document.getElementById('battle-log').innerText = `⚡ ${activePoke.name} usó ${type === 'heavy' ? 'Rayo Fuerte' : 'Ataque'}. Enemigo HP: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
-            }
-            updateUI();
-        }
-
-        function tryCatch() {
-            if (!activeEnemy) return;
-            if (playerData.pokeballs <= 0) {
-                alert("¡No tienes Pokéballs! Compra más en la tienda.");
-                return;
-            }
-
-            playerData.pokeballs--;
-            let hpRatio = activeEnemy.currentHp / activeEnemy.maxHp;
-
-            if (hpRatio < 0.6 || Math.random() < 0.5) {
-                alert(`🎉 ¡Atrapaste a ${activeEnemy.name}!`);
-                
-                if (playerData.pokedex[activeEnemy.id]) {
-                    playerData.pokedex[activeEnemy.id].caught++;
-                }
-
-                let newPoke = {
-                    id: activeEnemy.id,
-                    name: activeEnemy.name,
-                    level: 3,
-                    exp: 0,
-                    maxExp: 80,
-                    hp: activeEnemy.maxHp,
-                    maxHp: activeEnemy.maxHp,
-                    atk: 18,
-                    evoId: activeEnemy.id === 25 ? 26 : null,
-                    evoName: activeEnemy.id === 25 ? "Raichu" : null
-                };
-
-                if (playerData.team.length < 3) {
-                    playerData.team.push(newPoke);
-                } else {
-                    playerData.box.push(newPoke);
-                    alert(`📦 Equipo lleno. ${activeEnemy.name} fue enviado a la Caja de Colección.`);
-                }
-
-                spawnEnemyInMap(sceneContext);
-            } else {
-                alert(`❌ ¡${activeEnemy.name} escapó!`);
-            }
-            updateUI();
-        }
-
-        function selectPoke(index) {
-            if (playerData.team[index].hp <= 0) {
-                alert("¡Este Pokémon está debilitado!");
-                return;
-            }
-            playerData.activePokeIndex = index;
-            refreshMapSprites();
-            updateUI();
-        }
-
-        function sendToTeam(boxIndex) {
-            if (playerData.team.length >= 3) {
-                alert("Tu equipo activo está lleno (máximo 3).");
-                return;
-            }
-            let poke = playerData.box.splice(boxIndex, 1)[0];
-            playerData.team.push(poke);
-            updateUI();
-            alert(`¡${poke.name} se unió al equipo activo!`);
-        }
-
-        function healTeam() {
-            if (playerData.coins >= 15) {
-                playerData.coins -= 15;
-                playerData.team.forEach(p => { p.hp = p.maxHp; });
-                updateUI();
-                alert("🏥 ¡Centro Pokémon: Equipo curado por completo!");
-            } else {
-                alert("¡Faltan PokéDollars ($15)!");
-            }
-        }
-
-        function buyBall() {
-            if (playerData.coins >= 10) {
-                playerData.coins -= 10;
-                playerData.pokeballs++;
-                updateUI();
-            } else {
-                alert("¡No tienes suficientes PokéDollars ($10)!");
-            }
-        }
-
-        function sellLoot() {
-            let total = 0;
-            const prices = { 'Seda': 8, 'Pluma': 12, 'Colmillo': 10, 'Baya': 15, 'Escama': 20, 'Caparazón': 20 };
-            for (let item in playerData.inventory) {
-                total += playerData.inventory[item] * (prices[item] || 5);
-            }
-            if (total > 0) {
-                playerData.coins += total;
-                playerData.inventory = {};
-                updateUI();
-                alert(`💰 ¡Vendiste todo tu loot por $${total} PokéDollars!`);
-            } else {
-                alert("No tienes objetos para vender.");
-            }
-        }
-
-        function changeRoute() {
-            playerData.routeIndex = (playerData.routeIndex + 1) % routes.length;
-            let r = routes[playerData.routeIndex];
-            document.getElementById('zone-name').innerText = r.name;
-            if (sceneContext) {
-                sceneContext.cameras.main.setBackgroundColor(r.bg);
-                sceneContext.children.removeAll();
-                
-                createTrainerTexture(sceneContext);
-                drawMap(sceneContext, r);
-
-                trainer = sceneContext.physics.add.sprite(90, 95, 'trainer_gfx');
-                trainer.setCollideWorldBounds(true);
-
-                let activePoke = playerData.team[playerData.activePokeIndex];
-                petPokemon = sceneContext.physics.add.sprite(65, 95, getSpriteKey(activePoke.id));
-                petPokemon.setScale(0.85);
-
-                spawnEnemyInMap(sceneContext);
-            }
-        }
-
-        function updateUI() {
-            document.getElementById('coins').innerText = playerData.coins;
-            document.getElementById('pokeballs').innerText = playerData.pokeballs;
-
-            let teamHTML = "";
-            playerData.team.forEach((poke, idx) => {
-                let active = idx === playerData.activePokeIndex ? "active" : "";
-                let hpPct = (poke.hp / poke.maxHp) * 100;
-                teamHTML += `
-                    <div class="poke-slot ${active}" onclick="selectPoke(${idx})">
-                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png">
-                        <b>${poke.name}</b> (Lv.${poke.level})<br>
-                        <div class="bar-bg"><div class="bar-fill hp-fill" style="width:${hpPct}%"></div></div>
-                        <span style="font-size:9px;">${poke.hp}/${poke.maxHp} HP</span>
-                    </div>
-                `;
-            });
-            document.getElementById('team-container').innerHTML = teamHTML;
-
-            let pokedexHTML = "";
-            allPokemonSpecies.forEach((sp, index) => {
-                let entry = playerData.pokedex[sp.id];
-                let numStr = `#${String(index + 1).padStart(3, '0')}`;
-                if (entry) {
-                    pokedexHTML += `<div>✔️ ${numStr} <b>${sp.name}</b> | Visto: ${entry.seen} | Atrapado: ${entry.caught}</div>`;
-                } else {
-                    pokedexHTML += `<div>❓ ${numStr} ???</div>`;
-                }
-            });
-
-            if (playerData.box && playerData.box.length > 0) {
-                pokedexHTML += `<hr style="border-color:#444; margin:2px 0;"><b>📦 Caja de Colección:</b><br>`;
-                playerData.box.forEach((bPoke, bIdx) => {
-                    pokedexHTML += `<button onclick="sendToTeam(${bIdx})" style="margin:2px; background:#3b4cca; color:#fff; border:none; padding:2px 5px; border-radius:3px; cursor:pointer;">Sacar a ${bPoke.name}</button> `;
-                });
-            }
-            document.getElementById('pokedex-list').innerHTML = pokedexHTML;
-
-            let inv = [];
-            for (let i in playerData.inventory) {
-                if(playerData.inventory[i] > 0) inv.push(`${i} x${playerData.inventory[i]}`);
-            }
-            document.getElementById('inventory-list').innerHTML = inv.length ? inv.join(', ') : "Vacío";
-        }
-
-        updateUI();
-    </script>
-</body>
-</html>
