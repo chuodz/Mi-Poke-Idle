@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2D MMORPG Online - National Dex</title>
+    <title>PokeTibia 2D MMORPG Online - Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -151,7 +151,20 @@
     </div>
 
     <script>
-        let savedData = localStorage.getItem('poketibia_save_v4');
+        // Mapeo oficial de nombres para la Pokédex
+        const pokemonNames = {
+            1: "Bulbasaur", 4: "Charmander", 7: "Squirtle", 10: "Caterpie", 16: "Pidgey",
+            19: "Rattata", 25: "Pikachu", 26: "Raichu", 39: "Jigglypuff", 52: "Meowth",
+            54: "Psyduck", 60: "Poliwag", 63: "Abra", 66: "Machop", 74: "Geodude",
+            92: "Gastly", 95: "Onix", 121: "Starmie", 129: "Magikarp", 133: "Eevee",
+            143: "Snorlax", 150: "Mewtwo"
+        };
+
+        function getPokeName(id) {
+            return pokemonNames[id] || `Pokémon #${id}`;
+        }
+
+        let savedData = localStorage.getItem('poketibia_save_v5');
         let playerData = savedData ? JSON.parse(savedData) : {
             coins: 40,
             pokeballs: 5,
@@ -167,6 +180,9 @@
             questLevel: 0
         };
 
+        // Corregir nombres guardados si tenían errores previos
+        playerData.team.forEach(p => { p.name = getPokeName(p.id); });
+
         const questGoals = [
             { target: 3, rewardCoins: 30, rewardBalls: 2, desc: "Derrota 3 Pokémon" },
             { target: 10, rewardCoins: 80, rewardBalls: 5, desc: "Derrota 10 Pokémon" },
@@ -176,7 +192,7 @@
         ];
 
         function saveGame() {
-            localStorage.setItem('poketibia_save_v4', JSON.stringify(playerData));
+            localStorage.setItem('poketibia_save_v5', JSON.stringify(playerData));
         }
 
         const routes = [
@@ -185,17 +201,20 @@
             { name: "Cueva Oscura", bg: 0x222222, treeColor: 0x111111, grassColor: 0x444444, pathColor: 0x666666 }
         ];
 
-        // Generador dinámico para las más de 1000 especies (IDs del 1 al 898+)
+        const popularIds = [1, 4, 7, 10, 16, 19, 25, 39, 52, 54, 60, 63, 66, 74, 92, 121, 133];
+
         function getRandomPokemon() {
-            let randomId = Math.floor(Math.random() * 800) + 1; // Cubre generaciones masivas
+            let randomId = popularIds[Math.floor(Math.random() * popularIds.length)];
             let enemyLevel = Math.floor(Math.random() * 8) + 1;
+            let calculatedHp = Number(35 + (enemyLevel * 8));
             return {
                 id: randomId,
-                name: `Pokémon #${randomId}`,
+                name: getPokeName(randomId),
                 level: enemyLevel,
-                hp: 35 + (enemyLevel * 8),
-                maxHp: 35 + (enemyLevel * 8),
-                atk: 12 + (enemyLevel * 3),
+                hp: calculatedHp,
+                currentHp: calculatedHp,
+                maxHp: calculatedHp,
+                atk: Number(12 + (enemyLevel * 3)),
                 loot: 'Objeto Raro',
                 price: 15
             };
@@ -233,9 +252,10 @@
         let moveState = { left: false, right: false, up: false, down: false };
 
         function preload() {
-            // Precarga dinámica del Pokémon activo y compañero actual para evitar sobrecarga de red
-            let activePoke = playerData.team[playerData.activePokeIndex];
-            this.load.image(`poke_${activePoke.id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${activePoke.id}.png`);
+            popularIds.forEach(id => {
+                this.load.image(`poke_${id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`);
+            });
+            this.load.image('poke_26', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/26.png');
         }
 
         function create() {
@@ -248,10 +268,8 @@
             trainer.setCollideWorldBounds(true);
 
             let activePoke = playerData.team[playerData.activePokeIndex];
-            loadAndSetSprite(this, activePoke.id, (textureKey) => {
-                petPokemon = this.physics.add.sprite(65, 95, textureKey);
-                petPokemon.setScale(0.9);
-            });
+            petPokemon = this.physics.add.sprite(65, 95, `poke_${activePoke.id}`);
+            petPokemon.setScale(0.85);
 
             cursors = this.input.keyboard.createCursorKeys();
 
@@ -263,19 +281,6 @@
             setupOnlineServer();
             spawnEnemyInMap(this);
             updateUI();
-        }
-
-        function loadAndSetSprite(scene, pokeId, callback) {
-            let textureKey = `poke_${pokeId}`;
-            if (scene.textures.exists(textureKey)) {
-                callback(textureKey);
-            } else {
-                scene.load.image(textureKey, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokeId}.png`);
-                scene.load.once('complete', () => {
-                    callback(textureKey);
-                });
-                scene.load.start();
-            }
         }
 
         function createTrainerTexture(scene) {
@@ -324,20 +329,18 @@
             let randomY = Math.floor(Math.random() * 60) + 55;
 
             if (!playerData.pokedex[activeEnemy.id]) {
-                playerData.pokedex[activeEnemy.id] = { name: `Poke #${activeEnemy.id}`, id: activeEnemy.id, seen: 1, caught: 0 };
+                playerData.pokedex[activeEnemy.id] = { name: activeEnemy.name, id: activeEnemy.id, seen: 1, caught: 0 };
             } else {
                 playerData.pokedex[activeEnemy.id].seen++;
             }
 
-            loadAndSetSprite(scene, activeEnemy.id, (textureKey) => {
-                enemySprite = scene.physics.add.sprite(randomX, randomY, textureKey);
-                enemySprite.setScale(0.9);
+            enemySprite = scene.physics.add.sprite(randomX, randomY, `poke_${activeEnemy.id}`);
+            enemySprite.setScale(0.85);
 
-                enemyHpBar = scene.add.graphics();
-                updateEnemyHpBar();
-            });
+            enemyHpBar = scene.add.graphics();
+            updateEnemyHpBar();
 
-            document.getElementById('battle-log').innerText = `⚔️ ¡Un Pokémon Salvaje (Lv.${activeEnemy.level}) apareció!`;
+            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} salvaje (Lv.${activeEnemy.level}) apareció!`;
             updateUI();
             saveGame();
         }
@@ -348,7 +351,7 @@
             enemyHpBar.fillStyle(0x000000, 0.7);
             enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 24, 36, 5);
 
-            let pct = Math.max(0, activeEnemy.currentHp / activeEnemy.maxHp);
+            let pct = Math.max(0, Number(activeEnemy.currentHp) / Number(activeEnemy.maxHp));
             enemyHpBar.fillStyle(pct > 0.4 ? 0x00ff00 : 0xff0000, 1);
             enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 24, 36 * pct, 5);
         }
@@ -424,26 +427,31 @@
             }
         }
 
-        // Efectos Visuales Claros y Potenciados
+        // Proyectil preciso y directo desde el Pokémon hasta el objetivo
         function spawnSpellEffect(type) {
             if (!sceneContext || !petPokemon || !enemySprite) return;
             let color = type === 'heavy' ? 0xff3300 : 0xffea00;
-            let size = type === 'heavy' ? 10 : 7;
+            let size = type === 'heavy' ? 8 : 5;
             
-            let projectile = sceneContext.add.circle(petPokemon.x, petPokemon.y, size, color, 1);
+            let startX = petPokemon.x;
+            let startY = petPokemon.y;
+            let targetX = enemySprite.x;
+            let targetY = enemySprite.y;
+
+            let projectile = sceneContext.add.circle(startX, startY, size, color, 1);
             sceneContext.tweens.add({
                 targets: projectile,
-                x: enemySprite.x,
-                y: enemySprite.y,
-                duration: 180,
+                x: targetX,
+                y: targetY,
+                duration: 200,
                 onComplete: () => {
                     projectile.destroy();
-                    let flash = sceneContext.add.circle(enemySprite.x, enemySprite.y, 20, 0xffffff, 0.95);
+                    let flash = sceneContext.add.circle(targetX, targetY, 18, 0xffffff, 0.9);
                     sceneContext.tweens.add({
                         targets: flash,
-                        scale: 2.5,
+                        scale: 2.2,
                         alpha: 0,
-                        duration: 200,
+                        duration: 150,
                         onComplete: () => flash.destroy()
                     });
                 }
@@ -470,8 +478,13 @@
                 return;
             }
 
-            let damage = type === 'heavy' ? activePoke.atk * 1.8 : activePoke.atk;
-            activeEnemy.currentHp -= Math.floor(damage);
+            let damage = Math.floor(type === 'heavy' ? activePoke.atk * 1.8 : activePoke.atk);
+            
+            if (isNaN(activeEnemy.currentHp)) {
+                activeEnemy.currentHp = Number(activeEnemy.maxHp);
+            }
+
+            activeEnemy.currentHp -= damage;
             activePoke.hp = Math.max(0, activePoke.hp - 6);
             updateEnemyHpBar();
 
@@ -503,7 +516,7 @@
                     alert(`🎉 ¡Tu ${activePoke.name} subió al Nivel ${activePoke.level}!`);
                 }
 
-                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste al Pokémon salvaje!`;
+                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste a ${activeEnemy.name}!`;
                 saveGame();
                 spawnEnemyInMap(sceneContext);
             } else {
@@ -523,14 +536,14 @@
             let hpRatio = activeEnemy.currentHp / activeEnemy.maxHp;
 
             if (hpRatio < 0.6 || Math.random() < 0.5) {
-                alert(`🎉 ¡Atrapaste al Pokémon #${activeEnemy.id}!`);
+                alert(`🎉 ¡Atrapaste a ${activeEnemy.name}!`);
                 if (playerData.pokedex[activeEnemy.id]) {
                     playerData.pokedex[activeEnemy.id].caught++;
                 }
 
                 let newPoke = {
                     id: activeEnemy.id,
-                    name: `Poke #${activeEnemy.id}`,
+                    name: activeEnemy.name,
                     level: activeEnemy.level,
                     exp: 0,
                     maxExp: 80,
@@ -548,7 +561,7 @@
                 saveGame();
                 spawnEnemyInMap(sceneContext);
             } else {
-                alert(`❌ ¡El Pokémon salvaje escapó!`);
+                alert(`❌ ¡${activeEnemy.name} escapó!`);
             }
             updateUI();
         }
@@ -560,9 +573,9 @@
             }
             playerData.activePokeIndex = index;
             let activePoke = playerData.team[index];
-            loadAndSetSprite(sceneContext, activePoke.id, (textureKey) => {
-                if (petPokemon) petPokemon.setTexture(textureKey);
-            });
+            if (petPokemon && sceneContext) {
+                petPokemon.setTexture(`poke_${activePoke.id}`);
+            }
             updateUI();
             saveGame();
         }
@@ -576,7 +589,7 @@
             playerData.team.push(poke);
             updateUI();
             saveGame();
-            alert(`¡Se unió al equipo activo!`);
+            alert(`¡${poke.name} se unió al equipo activo!`);
         }
 
         function healTeam() {
@@ -634,10 +647,8 @@
                 trainer.setCollideWorldBounds(true);
 
                 let activePoke = playerData.team[playerData.activePokeIndex];
-                loadAndSetSprite(sceneContext, activePoke.id, (textureKey) => {
-                    petPokemon = sceneContext.physics.add.sprite(65, 95, textureKey);
-                    petPokemon.setScale(0.9);
-                });
+                petPokemon = sceneContext.physics.add.sprite(65, 95, `poke_${activePoke.id}`);
+                petPokemon.setScale(0.85);
 
                 spawnEnemyInMap(sceneContext);
             }
@@ -657,7 +668,7 @@
                 teamHTML += `
                     <div class="poke-slot ${active}" onclick="selectPoke(${idx})">
                         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png">
-                        <b>Poke #${poke.id}</b> (Lv.${poke.level})<br>
+                        <b>${poke.name}</b> (Lv.${poke.level})<br>
                         <div class="bar-bg"><div class="bar-fill hp-fill" style="width:${hpPct}%"></div></div>
                         <span style="font-size:9px;">${poke.hp}/${poke.maxHp} HP</span>
                     </div>
@@ -665,19 +676,19 @@
             });
             document.getElementById('team-container').innerHTML = teamHTML;
 
-            let pokedexHTML = "<i>Pokédex con National Dex activa</i><br>";
+            let pokedexHTML = "<i>Pokédex Activa</i><br>";
             for (let id in playerData.pokedex) {
                 let entry = playerData.pokedex[id];
-                pokedexHTML += `<div>✔️ #${String(entry.id).padStart(3, '0')} | Visto: ${entry.seen} | Atrapado: ${entry.caught}</div>`;
+                pokedexHTML += `<div>✔️ #${String(entry.id).padStart(3, '0')} <b>${getPokeName(entry.id)}</b> | Visto: ${entry.seen} | Atrapado: ${entry.caught}</div>`;
             }
 
             if (playerData.box && playerData.box.length > 0) {
                 pokedexHTML += `<hr style="border-color:#444; margin:2px 0;"><b>📦 Caja de Colección:</b><br>`;
                 playerData.box.forEach((bPoke, bIdx) => {
-                    pokedexHTML += `<button onclick="sendToTeam(${bIdx})" style="margin:2px; background:#3b4cca; color:#fff; border:none; padding:2px 5px; border-radius:3px; cursor:pointer;">Sacar #${bPoke.id}</button> `;
+                    pokedexHTML += `<button onclick="sendToTeam(${bIdx})" style="margin:2px; background:#3b4cca; color:#fff; border:none; padding:2px 5px; border-radius:3px; cursor:pointer;">Sacar a ${getPokeName(bPoke.id)}</button> `;
                 });
             }
-            document.getElementById('pokedex-list').innerHTML = pokedexHTML || "Aún no has descubierto Pokémon.";
+            document.getElementById('pokedex-list').innerHTML = pokedexHTML;
 
             let inv = [];
             for (let i in playerData.inventory) {
