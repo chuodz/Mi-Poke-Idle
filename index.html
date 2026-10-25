@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2D MMORPG Online - MMO Edition</title>
+    <title>PokeTibia 2D MMORPG Online - Stable Render</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -85,7 +85,6 @@
         .btn-orange { background: #d97706; }
         .btn-shop { background: #d97706; }
 
-        /* Ventanas Flotantes estilo Tibia UI */
         .modal-window {
             display: none;
             position: fixed;
@@ -159,7 +158,7 @@
         </div>
         <button class="action-btn btn-blue" style="width:100%; margin-top:2px;" onclick="changeRoute()">🗺️ Viajar a: <span id="zone-name">Ruta 1 (Lv.1+)</span></button>
 
-        <!-- BOTONES DE VENTANAS FLOTANTES (ESTILO TIBIA UI) -->
+        <!-- BOTONES DE VENTANAS FLOTANTES -->
         <div style="margin-top:4px;">
             <button class="menu-btn" onclick="toggleModal('shop-modal')">🛒 Tienda</button>
             <button class="menu-btn" onclick="toggleModal('pokedex-modal')">📖 Pokédex</button>
@@ -184,18 +183,18 @@
         </div>
     </div>
 
-    <!-- VENTANA 1: TIENDA COMPLETA -->
+    <!-- VENTANA 1: TIENDA -->
     <div id="shop-modal" class="modal-window">
         <div class="modal-header"><span>🛒 PokéMart (Tienda Oficial)</span><button class="close-btn" onclick="toggleModal('shop-modal')">X</button></div>
         <div style="font-size:10px; margin-bottom:5px; color:#ffcb05;">¡Compra ítems esenciales para tu aventura!</div>
         
         <div class="shop-item-row"><span>🔴 Pokéball ($10)</span><button class="buy-action-btn" onclick="buyItem('pokeballs', 1, 10)">Comprar</button></div>
-        <div class="shop-item-row"><span>🔵 Great Ball / Super Ball ($25)</span><button class="buy-action-btn" onclick="buyItem('greatballs', 1, 25)">Comprar</button></div>
+        <div class="shop-item-row"><span>🔵 Great Ball ($25)</span><button class="buy-action-btn" onclick="buyItem('greatballs', 1, 25)">Comprar</button></div>
         <div class="shop-item-row"><span>🟣 Ultra Ball ($50)</span><button class="buy-action-btn" onclick="buyItem('ultraballs', 1, 50)">Comprar</button></div>
         <div class="shop-item-row"><span>🧪 Poción de HP ($12)</span><button class="buy-action-btn" onclick="buyItem('potions', 1, 12)">Comprar</button></div>
-        <div class="shop-item-row"><span>🧪 Super Poción (+80 HP) ($25)</span><button class="buy-action-btn" onclick="buyItem('superpotions', 1, 25)">Comprar</button></div>
+        <div class="shop-item-row"><span>🧪 Super Poción ($25)</span><button class="buy-action-btn" onclick="buyItem('superpotions', 1, 25)">Comprar</button></div>
         <div class="shop-item-row"><span>✨ Revivir Pokémon ($40)</span><button class="buy-action-btn" onclick="buyItem('revives', 1, 40)">Comprar</button></div>
-        <div class="shop-item-row"><span>🏥 Curar Todo el Equipo ($15)</span><button class="buy-action-btn" onclick="healTeamShop()">Curar</button></div>
+        <div class="shop-item-row"><span>🏥 Curar Equipo ($15)</span><button class="buy-action-btn" onclick="healTeamShop()">Curar</button></div>
         <div class="shop-item-row" style="background:#312; border-color:#852;"><span>💰 Vender Todo el Loot</span><button class="buy-action-btn" style="background:#28a745; color:#fff;" onclick="sellLoot()">Vender</button></div>
     </div>
 
@@ -205,7 +204,7 @@
         <div id="pokedex-content">Cargando...</div>
     </div>
 
-    <!-- VENTANA 3: INVENTARIO Y MOCHILA -->
+    <!-- VENTANA 3: INVENTARIO -->
     <div id="inventory-modal" class="modal-window">
         <div class="modal-header"><span>🎒 Inventario & Objetos</span><button class="close-btn" onclick="toggleModal('inventory-modal')">X</button></div>
         <div id="inventory-content">Vacío</div>
@@ -217,16 +216,16 @@
         <div id="box-content">No hay Pokémon en la caja.</div>
     </div>
 
-    <!-- VENTANA 5: CHAT GLOBAL Y PRIVADO (MMO) -->
+    <!-- VENTANA 5: CHAT MMO -->
     <div id="chat-modal" class="modal-window">
         <div class="modal-header"><span>💬 Servidor de Chat MMO</span><button class="close-btn" onclick="toggleModal('chat-modal')">X</button></div>
         <div style="margin-bottom:4px;">
             <button onclick="setChatMode('global')" id="btn-global" style="background:#28a745; color:#fff; border:none; padding:3px 6px; border-radius:3px; font-size:9px; cursor:pointer;">🌍 Global</button>
-            <button onclick="setChatMode('private')" id="btn-private" style="background:#444; color:#fff; border:none; padding:3px 6px; border-radius:3px; font-size:9px; cursor:pointer;">🔒 Susurro (Privado)</button>
+            <button onclick="setChatMode('private')" id="btn-private" style="background:#444; color:#fff; border:none; padding:3px 6px; border-radius:3px; font-size:9px; cursor:pointer;">🔒 Susurro</button>
         </div>
         <div id="chat-messages" style="background:#111; border:1px solid #444; height:120px; overflow-y:auto; padding:4px; font-size:10px; margin-bottom:5px; border-radius:4px;">
-            <div style="color:#ffcb05;">[Sistema]: ¡Bienvenido al chat en línea de PokeTibia MMORPG!</div>
-            <div style="color:#aaa;">[Global] AshKetchum: ¡Hola a todos desde la Cueva Oscura!</div>
+            <div style="color:#ffcb05;">[Sistema]: ¡Conectado al servidor PokeTibia MMO!</div>
+            <div style="color:#aaa;">[Global] AshKetchum: ¡Hola a todos!</div>
         </div>
         <div id="private-recipient-box" style="display:none; margin-bottom:3px;">
             <input type="text" id="chat-to-user" placeholder="Nombre de usuario..." style="width:96%; background:#222; color:#fff; border:1px solid #555; padding:3px; font-size:10px; border-radius:3px;">
@@ -250,9 +249,9 @@
             return pokemonNames[id] || `Pokémon #${id}`;
         }
 
-        let savedData = localStorage.getItem('poketibia_save_v10');
+        let savedData = localStorage.getItem('poketibia_save_v11');
         let playerData = savedData ? JSON.parse(savedData) : {
-            coins: 80,
+            coins: 100,
             pokeballs: 5,
             greatballs: 0,
             ultraballs: 0,
@@ -275,10 +274,6 @@
             p.name = getPokeName(p.id); 
             if (!p.hp || p.hp <= 0) p.hp = p.maxHp || 60; 
         });
-        if (playerData.greatballs === undefined) playerData.greatballs = 0;
-        if (playerData.ultraballs === undefined) playerData.ultraballs = 0;
-        if (playerData.superpotions === undefined) playerData.superpotions = 0;
-        if (playerData.revives === undefined) playerData.revives = 1;
 
         const questGoals = [
             { target: 3, rewardCoins: 30, rewardBalls: 2, desc: "Derrota 3 Pokémon" },
@@ -289,7 +284,7 @@
         ];
 
         function saveGame() {
-            localStorage.setItem('poketibia_save_v10', JSON.stringify(playerData));
+            localStorage.setItem('poketibia_save_v11', JSON.stringify(playerData));
         }
 
         const routes = [
@@ -451,7 +446,7 @@
                     duration: 250,
                     onComplete: () => {
                         projectile.destroy();
-                        let enemyDmg = Math.floor(activeEnemy.atk * 0.6);
+                        let enemyDmg = Math.floor(activeEnemy.atk * 0.5);
                         activePoke.hp = Math.max(0, activePoke.hp - enemyDmg);
                         
                         document.getElementById('battle-log').innerText = `⚠️ ¡${activeEnemy.name} (Lv.${activeEnemy.level}) te atacó (-${enemyDmg} HP)!`;
@@ -459,11 +454,11 @@
                         saveGame();
 
                         if (activePoke.hp <= 0) {
-                            alert(`💀 ¡Tu ${activePoke.name} ha sido derrotado! Usa un Revivir o Poción en el inventario.`);
+                            alert(`💀 ¡Tu ${activePoke.name} ha sido derrotado! Usa un Revivir o Poción en tu inventario.`);
                         }
                     }
                 });
-            }, 4000);
+            }, 4500);
         }
 
         function createTrainerTexture(scene) {
@@ -517,11 +512,16 @@
                 playerData.pokedex[activeEnemy.id].seen++;
             }
 
-            enemySprite = scene.physics.add.sprite(randomX, randomY, `poke_${activeEnemy.id}`);
-            enemySprite.setScale(0.85);
+            scene.load.image(`poke_${activeEnemy.id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${activeEnemy.id}.png`);
+            scene.load.once('complete', () => {
+                if (!sceneContext) return;
+                enemySprite = scene.physics.add.sprite(randomX, randomY, `poke_${activeEnemy.id}`);
+                enemySprite.setScale(0.85);
 
-            enemyHpBar = scene.add.graphics();
-            updateEnemyHpBar();
+                enemyHpBar = scene.add.graphics();
+                updateEnemyHpBar();
+            });
+            scene.load.start();
 
             document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} (Lv.${activeEnemy.level}) salvaje apareció!`;
             updateUI();
@@ -535,39 +535,4 @@
             enemyHpBar.fillRect(enemySprite.x - 22, enemySprite.y - 24, 44, 5);
 
             let pct = Math.max(0, Number(activeEnemy.currentHp) / Number(activeEnemy.maxHp));
-            enemyHpBar.fillStyle(pct > 0.4 ? 0x00ff00 : 0xff0000, 1);
-            enemyHpBar.fillRect(enemySprite.x - 22, enemySprite.y - 24, 44 * pct, 5);
-        }
-
-        function setupDpadButton(id, direction) {
-            let btn = document.getElementById(id);
-            if(!btn) return;
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); moveState[direction] = true; });
-            btn.addEventListener('touchend', (e) => { e.preventDefault(); moveState[direction] = false; });
-            btn.addEventListener('mousedown', () => { moveState[direction] = true; });
-            btn.addEventListener('mouseup', () => { moveState[direction] = false; });
-        }
-
-        const myId = 'player_' + Math.random().toString(36).substr(2, 6);
-        function setupOnlineServer() {
-            if (window.BroadcastChannel) {
-                broadcastChannel = new BroadcastChannel('poketibia_mmo_channel');
-                broadcastChannel.onmessage = (event) => {
-                    let data = event.data;
-                    if (data.id === myId) return;
-
-                    if (data.type === 'move') {
-                        if (!remotePlayers[data.id] && sceneContext) {
-                            remotePlayers[data.id] = sceneContext.physics.add.sprite(data.x, data.y, 'trainer_gfx');
-                        } else if (remotePlayers[data.id]) {
-                            remotePlayers[data.id].x = data.x;
-                            remotePlayers[data.id].y = data.y;
-                        }
-                    } else if (data.type === 'leave') {
-                        if (remotePlayers[data.id]) {
-                            remotePlayers[data.id].destroy();
-                            delete remotePlayers[data.id];
-                        }
-                    } else if (data.type === 'chat') {
-                        let chatBox = document.getElementById('chat-messages');
-                        if (data.mode === 'global')
+            enemyHpBar.fillStyle(pct > 0.4 ? 0x00ff00 : 0xff0000, 
