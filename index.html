@@ -159,13 +159,13 @@
         <!-- ARENA DE COMBATE RETRO ESTABLE -->
         <div id="game-arena">
             <div class="battle-card" id="enemy-card">
-                <b> enemigo: <span id="e-name">Cargando...</span></b> [Lv.<span id="e-lvl">1</span>] <span id="e-rarity" style="color:#ffcb05;"></span>
+                <b>Enemigo: <span id="e-name">Bulbasaur</span></b> [Lv.<span id="e-lvl">1</span>] <span id="e-rarity" style="color:#ffcb05;">[Común]</span>
                 <div class="bar-bg"><div class="bar-fill hp-fill" id="e-hp-bar" style="width: 100%;"></div></div>
-                <span id="e-hp-text">HP: 100/100</span>
+                <span id="e-hp-text">HP: 60/60</span>
             </div>
             
             <div class="battle-card" id="player-battle-card" style="align-self: flex-end;">
-                <b> aliado: <span id="p-name">Pikachu</span></b> [Lv.<span id="p-lvl">50</span>]
+                <b>Aliado: <span id="p-name">Pikachu</span></b> [Lv.<span id="p-lvl">50</span>]
                 <div class="bar-bg"><div class="bar-fill hp-fill" id="p-hp-bar" style="width: 100%;"></div></div>
                 <span id="p-hp-text">HP: 800/800</span>
             </div>
@@ -257,3 +257,45 @@
             1: "Bulbasaur", 2: "Ivysaur", 3: "Venusaur",
             4: "Charmander", 5: "Charmeleon", 6: "Charizard",
             7: "Squirtle", 8: "Wartortle", 9: "Blastoise",
+            16: "Pidgey", 17: "Pidgeotto", 18: "Pidgeot",
+            25: "Pikachu", 26: "Raichu",
+            66: "Machop", 67: "Machoke", 68: "Machamp",
+            92: "Gastly", 93: "Haunter", 94: "Gengar",
+            143: "Snorlax", 150: "Mewtwo", 151: "Mew"
+        };
+
+        const evolutionLines = {
+            1: { nextId: 2, level: 40 }, 2: { nextId: 3, level: 80 },
+            4: { nextId: 5, level: 40 }, 5: { nextId: 6, level: 80 },
+            7: { nextId: 8, level: 40 }, 8: { nextId: 9, level: 80 },
+            16: { nextId: 17, level: 30 }, 17: { nextId: 18, level: 70 },
+            25: { nextId: 26, level: 40 },
+            66: { nextId: 67, level: 40 }, 67: { nextId: 68, level: 80 },
+            92: { nextId: 93, level: 40 }, 93: { nextId: 94, level: 80 }
+        };
+
+        function getPokeName(id) { return pokemonNames[id] || `Pokémon #${id}`; }
+
+        let currentAccount = "chuodz";
+        let isAdmin = true;
+        let chatMode = 'global';
+        let playerData = {
+            coins: 5000, pokeballs: 10, greatballs: 5, ultraballs: 5, masterballs: 2,
+            potions: 5, superpotions: 5, revives: 5, elixirs: 3,
+            routeLevel: 1, inventory: { "Pepita de Oro": 2 },
+            team: [
+                { id: 25, name: "Pikachu", level: 50, exp: 0, maxExp: 500, hp: 800, maxHp: 800, atk: 250, rarity: "Místico", shiny: false }
+            ],
+            activePokeIndex: 0, pokedex: { 25: {seen: 15, caught: 3} }, box: [], questCount: 0
+        };
+
+        let activeEnemy = null;
+
+        window.onload = function() {
+            spawnEnemy();
+            updateUI();
+        };
+
+        function spawnEnemy() {
+            let baseIds = [1, 4, 7, 16, 25, 66, 92, 143, 150, 151];
+            let randId =
