@@ -100,7 +100,7 @@
 <body>
 
     <div class="game-panel">
-        <h1>PokeTibia MMORPG Online</h1>
+        <h1>PokeTibia 2D MMORPG Online</h1>
         <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">40</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
 
         <!-- EQUIPO ACTIVO -->
@@ -129,9 +129,9 @@
             </div>
         </div>
 
-        <!-- MISIONES -->
+        <!-- MISIONES PROGRESIVAS -->
         <div class="box-section">
-            <b>📜 Misión Activa:</b> <span id="quest-text">Derrota 3 Pokémon salvajes (0/3)</span>
+            <b>📜 Misión Activa:</b> <span id="quest-text">Cargando misión...</span>
         </div>
 
         <!-- POKÉDEX Y COLECCIÓN -->
@@ -151,7 +151,9 @@
     </div>
 
     <script>
-        let playerData = {
+        // Sistema de Carga de Partida Guardada
+        let savedData = localStorage.getItem('poketibia_save_v2');
+        let playerData = savedData ? JSON.parse(savedData) : {
             coins: 40,
             pokeballs: 5,
             routeIndex: 0,
@@ -163,8 +165,20 @@
             pokedex: {},
             box: [],
             questCount: 0,
-            questTarget: 3
+            questLevel: 0 // Niveles de misión: 0(3), 1(10), 2(25), 3(50), 4(100)
         };
+
+        const questGoals = [
+            { target: 3, rewardCoins: 30, rewardBalls: 2, desc: "Derrota 3 Pokémon" },
+            { target: 10, rewardCoins: 80, rewardBalls: 5, desc: "Derrota 10 Pokémon" },
+            { target: 25, rewardCoins: 200, rewardBalls: 10, desc: "Derrota 25 Pokémon" },
+            { target: 50, rewardCoins: 450, rewardBalls: 20, desc: "Derrota 50 Pokémon" },
+            { target: 100, rewardCoins: 1000, rewardBalls: 40, desc: "¡Gran Caza! Derrota 100 Pokémon" }
+        ];
+
+        function saveGame() {
+            localStorage.setItem('poketibia_save_v2', JSON.stringify(playerData));
+        }
 
         const routes = [
             { name: "Ruta 1 - Pradera", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25, pathColor: 0x8b5a2b },
@@ -214,7 +228,6 @@
         let moveState = { left: false, right: false, up: false, down: false };
 
         function preload() {
-            // Precarga segura mediante URLs oficiales directas
             allPokemonSpecies.forEach(p => {
                 this.load.image(`poke_${p.id}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`);
             });
@@ -225,7 +238,7 @@
             sceneContext = this;
 
             createTrainerTexture(this);
-            drawMap(this, routes[0]);
+            drawMap(this, routes[playerData.routeIndex || 0]);
 
             trainer = this.physics.add.sprite(90, 95, 'trainer_gfx');
             trainer.setCollideWorldBounds(true);
@@ -307,6 +320,7 @@
 
             document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} salvaje apareció en el mapa!`;
             updateUI();
+            saveGame();
         }
 
         function updateEnemyHpBar() {
@@ -391,6 +405,32 @@
             }
         }
 
+        // Efectos Visuales Mejorados de Ataques en Pantalla
+        function spawnSpellEffect(type) {
+            if (!sceneContext || !trainer || !enemySprite) return;
+            let color = type === 'heavy' ? 0xff4500 : 0xffff00;
+            let size = type === 'heavy' ? 9 : 6;
+            
+            let projectile = sceneContext.add.circle(trainer.x, trainer.y, size, color, 1);
+            sceneContext.tweens.add({
+                targets: projectile,
+                x: enemySprite.x,
+                y: enemySprite.y,
+                duration: 200,
+                onComplete: () => {
+                    projectile.destroy();
+                    let flash = sceneContext.add.circle(enemySprite.x, enemySprite.y, 16, 0xffffff, 0.9);
+                    sceneContext.tweens.add({
+                        targets: flash,
+                        scale: 2.2,
+                        alpha: 0,
+                        duration: 150,
+                        onComplete: () => flash.destroy()
+                    });
+                }
+            });
+        }
+
         function castSpell(type) {
             let now = Date.now();
             if (now - lastAttackTime < 700) {
@@ -398,6 +438,7 @@
                 return;
             }
             lastAttackTime = now;
+            spawnSpellEffect(type);
             triggerAttack(type);
         }
 
@@ -417,14 +458,21 @@
 
             if (activeEnemy.currentHp <= 0) {
                 playerData.inventory[activeEnemy.loot] = (playerData.inventory[activeEnemy.loot] || 0) + 1;
-                playerData.coins += 10;
+                playerData.coins += 12;
 
+                // Sistema Progresivo de Misiones (3 -> 10 -> 25 -> 50 -> 100)
                 playerData.questCount++;
-                if (playerData.questCount >= playerData.questTarget) {
-                    playerData.coins += 30;
-                    playerData.pokeballs += 2;
-                    alert("📜 ¡Misión Completada! Recompensa: +$30 y +2 Pokéballs.");
+                let currentGoal = questGoals[playerData.questLevel] || questGoals[questGoals.length - 1];
+                
+                if (playerData.questCount >= currentGoal.target) {
+                    playerData.coins += currentGoal.rewardCoins;
+                    playerData.pokeballs += currentGoal.rewardBalls;
+                    alert(`📜 ¡Misión Cumplida (${currentGoal.desc})!\nRecompensa: +$${currentGoal.rewardCoins} y +${currentGoal.rewardBalls} Pokéballs.`);
+                    
                     playerData.questCount = 0;
+                    if (playerData.questLevel < questGoals.length - 1) {
+                        playerData.questLevel++;
+                    }
                 }
 
                 activePoke.exp += 45;
@@ -446,6 +494,7 @@
                 }
 
                 document.getElementById('battle-log').innerText = `💥 ¡Derrotaste al ${activeEnemy.name}!`;
+                saveGame();
                 spawnEnemyInMap(sceneContext);
             } else {
                 document.getElementById('battle-log').innerText = `⚡ ${activePoke.name} usó ${type === 'heavy' ? 'Rayo Fuerte' : 'Ataque'}. HP: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
@@ -488,6 +537,7 @@
                     playerData.box.push(newPoke);
                     alert(`📦 Equipo lleno. ${activeEnemy.name} fue enviado a la Caja de Colección.`);
                 }
+                saveGame();
                 spawnEnemyInMap(sceneContext);
             } else {
                 alert(`❌ ¡${activeEnemy.name} escapó!`);
@@ -506,6 +556,7 @@
                 petPokemon.setTexture(`poke_${activePoke.id}`);
             }
             updateUI();
+            saveGame();
         }
 
         function sendToTeam(boxIndex) {
@@ -516,6 +567,7 @@
             let poke = playerData.box.splice(boxIndex, 1)[0];
             playerData.team.push(poke);
             updateUI();
+            saveGame();
             alert(`¡${poke.name} se unió al equipo activo!`);
         }
 
@@ -524,6 +576,7 @@
                 playerData.coins -= 15;
                 playerData.team.forEach(p => { p.hp = p.maxHp; });
                 updateUI();
+                saveGame();
                 alert("🏥 ¡Centro Pokémon: Equipo curado por completo!");
             } else {
                 alert("¡Faltan PokéDollars ($15)!");
@@ -535,6 +588,7 @@
                 playerData.coins -= 10;
                 playerData.pokeballs++;
                 updateUI();
+                saveGame();
             } else {
                 alert("¡No tienes suficientes PokéDollars ($10)!");
             }
@@ -550,6 +604,7 @@
                 playerData.coins += total;
                 playerData.inventory = {};
                 updateUI();
+                saveGame();
                 alert(`💰 ¡Vendiste todo tu loot por $${total} PokéDollars!`);
             } else {
                 alert("No tienes objetos para vender.");
@@ -557,9 +612,10 @@
         }
 
         function changeRoute() {
-            playerData.routeIndex = (playerData.routeIndex + 1) % routes.length;
+            playerData.routeIndex = ((playerData.routeIndex || 0) + 1) % routes.length;
             let r = routes[playerData.routeIndex];
             document.getElementById('zone-name').innerText = r.name;
+            saveGame();
             if (sceneContext) {
                 sceneContext.cameras.main.setBackgroundColor(r.bg);
                 sceneContext.children.removeAll();
@@ -581,7 +637,9 @@
         function updateUI() {
             document.getElementById('coins').innerText = playerData.coins;
             document.getElementById('pokeballs').innerText = playerData.pokeballs;
-            document.getElementById('quest-text').innerText = `Derrota 3 Pokémon salvajes (${playerData.questCount}/${playerData.questTarget})`;
+            
+            let currentGoal = questGoals[playerData.questLevel] || questGoals[questGoals.length - 1];
+            document.getElementById('quest-text').innerText = `${currentGoal.desc} (${playerData.questCount}/${currentGoal.target})`;
 
             let teamHTML = "";
             playerData.team.forEach((poke, idx) => {
