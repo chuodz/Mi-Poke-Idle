@@ -27,11 +27,16 @@
         .exp-bar-bg { width: 100%; background: #444; height: 10px; border-radius: 5px; overflow: hidden; margin: 4px 0; }
         .exp-bar-fill { height: 100%; background: #3b4cca; width: 0%; transition: width 0.3s; }
         #game-container { 
-            display: inline-block; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
             border: 2px solid #ffcb05; 
             border-radius: 6px; 
             overflow: hidden; 
-            margin-top: 5px;
+            margin: 5px auto;
+            width: 360px;
+            height: 200px;
+            background: #2d4d2d;
         }
         .dpad-container {
             margin-top: 5px;
@@ -63,6 +68,7 @@
         <p>EXP: <span id="player-exp">0</span> / <span id="player-max-exp">100</span></p>
         <div class="exp-bar-bg"><div id="exp-fill" class="exp-bar-fill"></div></div>
         
+        <!-- CONTENEDOR DEL JUEGO VISIBLE -->
         <div id="game-container"></div>
 
         <p id="battle-log">¡Camina por el césped para encontrar Pokémon!</p>
@@ -100,7 +106,7 @@
             width: 360,
             height: 200,
             parent: 'game-container',
-            backgroundColor: routes[0].bg,
+            backgroundColor: '#2d4d2d',
             physics: {
                 default: 'arcade',
                 arcade: { gravity: { y: 0 }, debug: false }
@@ -137,6 +143,7 @@
 
         function setupDpadButton(id, direction) {
             let btn = document.getElementById(id);
+            if(!btn) return;
             btn.addEventListener('touchstart', (e) => { e.preventDefault(); moveState[direction] = true; });
             btn.addEventListener('touchend', (e) => { e.preventDefault(); moveState[direction] = false; });
             btn.addEventListener('mousedown', () => { moveState[direction] = true; });
@@ -144,6 +151,7 @@
         }
 
         function update() {
+            if (!player) return;
             player.setVelocity(0);
             let speed = 120;
             isMoving = false;
@@ -154,7 +162,6 @@
             if (cursors.up.isDown || moveState.up) { player.setVelocityY(-speed); isMoving = true; }
             else if (cursors.down.isDown || moveState.down) { player.setVelocityY(speed); isMoving = true; }
 
-            // Probabilidad aleatoria de encuentro al caminar
             if (isMoving && Math.random() < 0.015) {
                 encounterPokemon();
             }
@@ -163,11 +170,11 @@
         function encounterPokemon() {
             let pokes = ["Rattata", "Pidgey", "Caterpie", "Bulbasaur"];
             let wildPoke = pokes[Math.floor(Math.random() * pokes.length)];
-            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${wildPoke} salvaje apareció en el camino!`;
+            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${wildPoke} salvaje apareció!`;
         }
 
         function triggerAttack() {
-            document.getElementById('battle-log').innerText = `💥 ¡Atacaste al Pokémon salvaje! Ganaste 35 EXP.`;
+            document.getElementById('battle-log').innerText = `💥 ¡Atacaste! Ganaste 35 EXP.`;
             playerData.exp += 35;
             if (playerData.exp >= playerData.maxExp) {
                 playerData.exp -= playerData.maxExp;
@@ -182,4 +189,21 @@
             playerData.routeIndex = (playerData.routeIndex + 1) % routes.length;
             let currentRoute = routes[playerData.routeIndex];
             document.getElementById('route-name').innerText = currentRoute.name;
-            game.scene.scenes[0].cameras.main.setBackgroundColor(currentRoute.bg);
+            if (game.scene.scenes[0]) {
+                game.scene.scenes[0].cameras.main.setBackgroundColor(currentRoute.bg);
+            }
+            document.getElementById('battle-log').innerText = `📍 Viajaste a ${currentRoute.name}.`;
+        }
+
+        function updateUI() {
+            document.getElementById('player-level').innerText = playerData.level;
+            document.getElementById('player-exp').innerText = playerData.exp;
+            document.getElementById('player-max-exp').innerText = playerData.maxExp;
+            let fillPercent = (playerData.exp / playerData.maxExp) * 100;
+            document.getElementById('exp-fill').style.width = `${Math.min(100, fillPercent)}%`;
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
