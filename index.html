@@ -35,7 +35,7 @@
             overflow: hidden; 
             margin: 5px auto;
             width: 360px;
-            height: 200px;
+            height: 220px;
             background: #2d4d2d;
         }
         .dpad-container {
@@ -54,7 +54,7 @@
             cursor: pointer;
             user-select: none;
         }
-        .dpad-btn { width: 50px; height: 50px; font-size: 18px; margin: 3px; }
+        .dpad-btn { width: 48px; height: 48px; font-size: 18px; margin: 2px; }
         .action-btn { width: 100%; padding: 8px; margin-top: 5px; font-size: 13px; background: #28a745; }
         .action-btn:hover { background: #1e7e34; }
         .dpad-btn:active, .action-btn:active { background: #b32305; }
@@ -64,16 +64,16 @@
 
     <div class="game-panel">
         <h1>PokeTibia 2D World</h1>
-        <p>Entrenador Nivel <span id="player-level">1</span> | Ruta: <b id="route-name">Ruta 1 (Césped)</b></p>
+        <p>Entrenador Nivel <span id="player-level">1</span> | Ruta: <b id="route-name">Ruta 1 (Bosque)</b></p>
         <p>EXP: <span id="player-exp">0</span> / <span id="player-max-exp">100</span></p>
         <div class="exp-bar-bg"><div id="exp-fill" class="exp-bar-fill"></div></div>
         
-        <!-- CONTENEDOR DEL JUEGO VISIBLE -->
+        <!-- CONTENEDOR DEL JUEGO -->
         <div id="game-container"></div>
 
         <p id="battle-log">¡Camina por el césped para encontrar Pokémon!</p>
         
-        <button class="action-btn" onclick="triggerAttack()">⚡ Usar Ataque Principal</button>
+        <button class="action-btn" onclick="triggerAttack()">⚡ Atacar Enemigo Visible</button>
         <button class="action-btn" style="background:#3b4cca;" onclick="changeRoute()">🗺️ Cambiar de Ruta</button>
 
         <!-- CONTROLES TÁCTILES -->
@@ -96,17 +96,21 @@
         };
 
         const routes = [
-            { name: "Ruta 1 (Césped)", bg: 0x2d4d2d },
-            { name: "Bosque Verde", bg: 0x1b3b1b },
-            { name: "Cueva Oscura", bg: 0x333333 }
+            { name: "Ruta 1 (Bosque)", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25 },
+            { name: "Bosque Verde", bg: 0x183b0d, treeColor: 0x0a1a05, grassColor: 0x245413 },
+            { name: "Cueva Oscura", bg: 0x222222, treeColor: 0x111111, grassColor: 0x444444 }
         ];
+
+        let activeEnemy = null;
+        let enemySprite = null;
+        let enemyHpBar = null;
 
         const config = {
             type: Phaser.AUTO,
             width: 360,
-            height: 200,
+            height: 220,
             parent: 'game-container',
-            backgroundColor: '#2d4d2d',
+            backgroundColor: routes[0].bg,
             physics: {
                 default: 'arcade',
                 arcade: { gravity: { y: 0 }, debug: false }
@@ -119,17 +123,27 @@
         };
 
         const game = new Phaser.Game(config);
+        let sceneContext;
         let player;
         let cursors;
         let moveState = { left: false, right: false, up: false, down: false };
-        let isMoving = false;
 
         function preload() {
             this.load.image('player', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png');
+            this.load.image('caterpie', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10.png');
+            this.load.image('pidgey', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/16.png');
+            this.load.image('rattata', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/19.png');
+            this.load.image('charmander', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png');
         }
 
         function create() {
-            player = this.physics.add.sprite(180, 100, 'player');
+            sceneContext = this;
+
+            // Dibujar mapa: Árboles y zonas de césped
+            drawMapDecoration(this, routes[0]);
+
+            // Jugador
+            player = this.physics.add.sprite(180, 110, 'player');
             player.setCollideWorldBounds(true);
             player.setScale(1.1);
 
@@ -139,6 +153,72 @@
             setupDpadButton('btn-right', 'right');
             setupDpadButton('btn-up', 'up');
             setupDpadButton('btn-down', 'down');
+
+            // Aparece el primer enemigo en el mapa
+            spawnEnemyInMap(this);
+        }
+
+        function drawMapDecoration(scene, route) {
+            let graphics = scene.add.graphics();
+
+            // Dibujar zonas de césped alto (parches claros)
+            graphics.fillStyle(route.grassColor, 1);
+            graphics.fillRect(40, 40, 100, 60);
+            graphics.fillRect(220, 120, 100, 60);
+
+            // Dibujar bordes con Árboles (Círculos verdes oscuros decorativos)
+            graphics.fillStyle(route.treeColor, 1);
+            // Pared superior de árboles
+            for(let x = 15; x <= 345; x += 30) {
+                graphics.fillCircle(x, 15, 18);
+                graphics.fillCircle(x, 205, 18);
+            }
+            // Pared lateral de árboles
+            for(let y = 15; y <= 205; y += 30) {
+                graphics.fillCircle(15, y, 18);
+                graphics.fillCircle(345, y, 18);
+            }
+        }
+
+        function spawnEnemyInMap(scene) {
+            if (enemySprite) enemySprite.destroy();
+            if (enemyHpBar) enemyHpBar.destroy();
+
+            const pokes = [
+                { key: 'caterpie', name: 'Caterpie', hp: 40 },
+                { key: 'pidgey', name: 'Pidgey', hp: 50 },
+                { key: 'rattata', name: 'Rattata', hp: 45 },
+                { key: 'charmander', name: 'Charmander', hp: 70 }
+            ];
+
+            let randomPoke = pokes[Math.floor(Math.random() * pokes.length)];
+            let randomX = Math.floor(Math.random() * 200) + 80;
+            let randomY = Math.floor(Math.random() * 100) + 60;
+
+            activeEnemy = { ...randomPoke, currentHp: randomPoke.hp, maxHp: randomPoke.hp };
+
+            enemySprite = scene.physics.add.sprite(randomX, randomY, randomPoke.key);
+            enemySprite.setScale(1.1);
+
+            // Dibujar barra de vida sobre el enemigo
+            enemyHpBar = scene.add.graphics();
+            updateEnemyHpBar();
+
+            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} salvaje está en el mapa!`;
+        }
+
+        function updateEnemyHpBar() {
+            if (!enemyHpBar || !enemySprite || !activeEnemy) return;
+            enemyHpBar.clear();
+            
+            // Fondo barra
+            enemyHpBar.fillStyle(0x000000, 0.7);
+            enemyHpBar.fillRect(enemySprite.x - 20, enemySprite.y - 30, 40, 6);
+
+            // Vida restante
+            let pct = Math.max(0, activeEnemy.currentHp / activeEnemy.maxHp);
+            enemyHpBar.fillStyle(pct > 0.5 ? 0x00ff00 : 0xff0000, 1);
+            enemyHpBar.fillRect(enemySprite.x - 20, enemySprite.y - 30, 40 * pct, 6);
         }
 
         function setupDpadButton(id, direction) {
@@ -154,45 +234,59 @@
             if (!player) return;
             player.setVelocity(0);
             let speed = 120;
-            isMoving = false;
 
-            if (cursors.left.isDown || moveState.left) { player.setVelocityX(-speed); isMoving = true; }
-            else if (cursors.right.isDown || moveState.right) { player.setVelocityX(speed); isMoving = true; }
+            if (cursors.left.isDown || moveState.left) { player.setVelocityX(-speed); }
+            else if (cursors.right.isDown || moveState.right) { player.setVelocityX(speed); }
 
-            if (cursors.up.isDown || moveState.up) { player.setVelocityY(-speed); isMoving = true; }
-            else if (cursors.down.isDown || moveState.down) { player.setVelocityY(speed); isMoving = true; }
+            if (cursors.up.isDown || moveState.up) { player.setVelocityY(-speed); }
+            else if (cursors.down.isDown || moveState.down) { player.setVelocityY(speed); }
 
-            if (isMoving && Math.random() < 0.015) {
-                encounterPokemon();
+            if (enemySprite && activeEnemy) {
+                updateEnemyHpBar();
             }
-        }
-
-        function encounterPokemon() {
-            let pokes = ["Rattata", "Pidgey", "Caterpie", "Bulbasaur"];
-            let wildPoke = pokes[Math.floor(Math.random() * pokes.length)];
-            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${wildPoke} salvaje apareció!`;
         }
 
         function triggerAttack() {
-            document.getElementById('battle-log').innerText = `💥 ¡Atacaste! Ganaste 35 EXP.`;
-            playerData.exp += 35;
-            if (playerData.exp >= playerData.maxExp) {
-                playerData.exp -= playerData.maxExp;
-                playerData.level++;
-                playerData.maxExp = Math.floor(playerData.maxExp * 1.3);
-                alert(`🎉 ¡Subiste al Nivel ${playerData.level}!`);
+            if (!activeEnemy || !sceneContext) return;
+
+            activeEnemy.currentHp -= 20;
+            updateEnemyHpBar();
+
+            if (activeEnemy.currentHp <= 0) {
+                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste a ${activeEnemy.name}! +45 EXP.`;
+                playerData.exp += 45;
+                
+                if (playerData.exp >= playerData.maxExp) {
+                    playerData.exp -= playerData.maxExp;
+                    playerData.level++;
+                    playerData.maxExp = Math.floor(playerData.maxExp * 1.3);
+                    alert(`🎉 ¡Subiste al Nivel ${playerData.level}!`);
+                }
+
+                updateUI();
+                spawnEnemyInMap(sceneContext);
+            } else {
+                document.getElementById('battle-log').innerText = `⚡ Le diste un golpe a ${activeEnemy.name}. HP: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
             }
-            updateUI();
         }
 
         function changeRoute() {
             playerData.routeIndex = (playerData.routeIndex + 1) % routes.length;
             let currentRoute = routes[playerData.routeIndex];
             document.getElementById('route-name').innerText = currentRoute.name;
-            if (game.scene.scenes[0]) {
-                game.scene.scenes[0].cameras.main.setBackgroundColor(currentRoute.bg);
+            
+            if (sceneContext) {
+                sceneContext.cameras.main.setBackgroundColor(currentRoute.bg);
+                sceneContext.children.removeAll(); // Limpiar antiguos gráficos
+                
+                drawMapDecoration(sceneContext, currentRoute);
+                
+                player = sceneContext.physics.add.sprite(180, 110, 'player');
+                player.setCollideWorldBounds(true);
+                player.setScale(1.1);
+
+                spawnEnemyInMap(sceneContext);
             }
-            document.getElementById('battle-log').innerText = `📍 Viajaste a ${currentRoute.name}.`;
         }
 
         function updateUI() {
