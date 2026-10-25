@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2.5D Isometric MMORPG</title>
+    <title>PokeTibia 2.5D Isometric - Full Visuals</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -38,7 +39,7 @@
             margin: 3px auto;
             width: 360px;
             height: 180px;
-            background: #1a331a;
+            background: #2d5a27;
         }
 
         .team-bar {
@@ -139,16 +140,16 @@
 <body>
 
     <div class="game-panel" id="main-game-panel">
-        <h1>PokeTibia 2.5D Isometric - <span id="player-title" style="color:#ffcb05;">👑 chuodz [ADMIN]</span></h1>
-        <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">1230</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
+        <h1>PokeTibia 2.5D - <span style="color:#ffcb05;">👑 chuodz [ADMIN]</span></h1>
+        <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">1430</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
 
         <!-- EQUIPO ACTIVO -->
         <div id="team-container" class="team-bar"></div>
         
-        <!-- CONTENEDOR ISOMÉTRICO -->
+        <!-- CONTENEDOR DEL JUEGO -->
         <div id="game-container"></div>
 
-        <p id="battle-log">¡Explora los caminos isométricos y caza!</p>
+        <p id="battle-log">¡Combate isométrico activo!</p>
         
         <!-- BARRA DE ACCIONES -->
         <div>
@@ -177,7 +178,6 @@
             </div>
         </div>
 
-        <!-- MISIONES -->
         <div class="box-section">
             <b>📜 Misión Activa:</b> <span id="quest-text">Derrota 10 Pokémon (8/10)</span>
         </div>
@@ -188,7 +188,6 @@
         <div class="modal-header"><span>🛒 PokéMart (Tienda Oficial)</span><button class="close-btn" onclick="toggleModal('shop-modal')">X</button></div>
         <div class="shop-item-row"><span>🔴 Pokéball ($10)</span><button class="buy-action-btn" onclick="buyItem('pokeballs', 1, 10)">Comprar</button></div>
         <div class="shop-item-row"><span>🔵 Great Ball ($25)</span><button class="buy-action-btn" onclick="buyItem('greatballs', 1, 25)">Comprar</button></div>
-        <div class="shop-item-row"><span>🟣 Ultra Ball ($50)</span><button class="buy-action-btn" onclick="buyItem('ultraballs', 1, 50)">Comprar</button></div>
         <div class="shop-item-row"><span>🧪 Poción de HP ($12)</span><button class="buy-action-btn" onclick="buyItem('potions', 1, 12)">Comprar</button></div>
         <div class="shop-item-row"><span>🏥 Curar Equipo ($15)</span><button class="buy-action-btn" onclick="healTeamShop()">Curar</button></div>
         <div class="shop-item-row" style="background:#312; border-color:#852;"><span>💰 Vender Loot</span><button class="buy-action-btn" style="background:#28a745; color:#fff;" onclick="sellLoot()">Vender</button></div>
@@ -212,7 +211,7 @@
     <div id="chat-modal" class="modal-window">
         <div class="modal-header"><span>💬 Chat MMO Isométrico</span><button class="close-btn" onclick="toggleModal('chat-modal')">X</button></div>
         <div id="chat-messages" style="background:#111; border:1px solid #444; height:120px; overflow-y:auto; padding:4px; font-size:10px; margin-bottom:5px; border-radius:4px;">
-            <div style="color:#ffcb05;">[Sistema]: ¡Conectado al servidor 2.5D!</div>
+            <div style="color:#ffcb05;">[Sistema]: ¡Conectado al servidor 2.5D Isométrico!</div>
         </div>
         <div style="display:flex;">
             <input type="text" id="chat-input" placeholder="Mensaje..." style="flex:1; background:#222; color:#fff; border:1px solid #555; padding:3px; font-size:10px; border-radius:3px;">
@@ -234,7 +233,7 @@
         let currentAccount = "chuodz";
         let isAdmin = true;
         let playerData = {
-            coins: 1230, pokeballs: 5, greatballs: 2, ultraballs: 1, potions: 5, superpotions: 2, revives: 2,
+            coins: 1430, pokeballs: 5, greatballs: 2, ultraballs: 1, potions: 5, superpotions: 2, revives: 2,
             routeIndex: 0, inventory: {},
             team: [
                 { id: 25, name: "Pikachu", level: 11, exp: 40, maxExp: 100, hp: 108, maxHp: 150, atk: 45 },
@@ -244,7 +243,7 @@
             activePokeIndex: 0, pokedex: { 25: {seen:5, caught:2}, 92:{seen:2, caught:1} }, box: [], questCount: 8, questLevel: 1
         };
 
-        let activeEnemy = { id: 143, name: "Snorlax", level: 1, currentHp: 90, maxHp: 90, atk: 20 };
+        let activeEnemy = { id: 143, name: "Snorlax", level: 5, currentHp: 120, maxHp: 120, atk: 25 };
         let sceneContext, trainer, petPokemon, enemySprite, enemyHpBar, cursors;
         let moveState = { left: false, right: false, up: false, down: false };
         let lastAttackTime = 0;
@@ -258,7 +257,7 @@
                 width: 360,
                 height: 180,
                 parent: 'game-container',
-                backgroundColor: 0x1a331a,
+                backgroundColor: 0x2d5a27,
                 physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
                 scene: { preload: preload, create: create, update: update }
             };
@@ -273,16 +272,17 @@
 
         function create() {
             sceneContext = this;
-            createIsometricTiles(this);
+            drawIsometricMap(this);
             createTrainerTexture(this);
 
-            trainer = this.physics.add.sprite(180, 90, 'trainer_gfx');
+            trainer = this.physics.add.sprite(110, 100, 'trainer_gfx');
             let activePoke = playerData.team[playerData.activePokeIndex];
-            petPokemon = this.physics.add.sprite(150, 100, `poke_${activePoke.id}`);
+            petPokemon = this.physics.add.sprite(80, 110, `poke_${activePoke.id}`);
             petPokemon.setScale(0.85);
 
-            enemySprite = this.physics.add.sprite(260, 70, 'poke_143');
-            enemySprite.setScale(0.85);
+            enemySprite = this.physics.add.sprite(260, 75, 'poke_143');
+            enemySprite.setScale(0.9);
+
             enemyHpBar = this.add.graphics();
             updateEnemyHpBar();
 
@@ -293,33 +293,47 @@
             setupDpadButton('btn-down', 'down');
         }
 
-        // Conversión a perspectiva isométrica en rombo
-        function createIsometricTiles(scene) {
-            let graphics = scene.add.graphics();
-            graphics.fillStyle(0x2d5a27, 1);
-            graphics.fillRect(0, 0, 360, 180);
+        // Mapa isométrico detallado con césped, caminos y árboles decorativos
+        function drawIsometricMap(scene) {
+            let bg = scene.add.graphics();
+            // Fondo verde césped isométrico
+            bg.fillStyle(0x2d5a27, 1);
+            bg.fillRect(0, 0, 360, 180);
 
-            // Dibujar cuadrícula isométrica en rombo
-            graphics.lineStyle(1, 0x3d7a33, 0.6);
-            let tileWidth = 40, tileHeight = 20;
-            for (let x = -40; x < 400; x += tileWidth) {
-                for (let y = -20; y < 200; y += tileHeight) {
-                    graphics.strokePoints([
-                        {x: x, y: y + tileHeight/2},
-                        {x: x + tileWidth/2, y: y},
-                        {x: x + tileWidth, y: y + tileHeight/2},
-                        {x: x + tileWidth/2, y: y + tileHeight}
+            // Camino central de piedra/tierra isométrica en cruz
+            bg.fillStyle(0x8b5a2b, 1);
+            bg.fillRect(0, 80, 360, 25);
+            bg.fillRect(165, 0, 30, 180);
+
+            // Cuadrícula de rombos isométricos
+            bg.lineStyle(1, 0x3a7532, 0.7);
+            let tw = 40, th = 20;
+            for (let x = -20; x < 400; x += tw) {
+                for (let y = -10; y < 200; y += th) {
+                    bg.strokePoints([
+                        {x: x, y: y + th/2},
+                        {x: x + tw/2, y: y},
+                        {x: x + tw, y: y + th/2},
+                        {x: x + tw/2, y: y + th}
                     ], true);
                 }
             }
+
+            // Árboles decorativos en las esquinas
+            bg.fillStyle(0x143308, 1);
+            bg.fillCircle(40, 30, 22);
+            bg.fillCircle(320, 30, 22);
+            bg.fillCircle(40, 150, 22);
+            bg.fillCircle(320, 150, 22);
         }
 
         function createTrainerTexture(scene) {
             if (scene.textures.exists('trainer_gfx')) return;
             let g = scene.add.graphics();
-            g.fillStyle(0xffd700, 1); g.fillRect(6, 12, 12, 12); // Admin Gold
+            g.fillStyle(0xffd700, 1); g.fillRect(6, 12, 12, 12); // Ropa Admin Dorado
             g.fillStyle(0x333333, 1); g.fillRect(7, 24, 10, 8);
             g.fillStyle(0xffcc99, 1); g.fillCircle(12, 8, 6);
+            g.fillStyle(0xcc0000, 1); g.fillRect(4, 2, 16, 4); // Gorra Admin
             g.generateTexture('trainer_gfx', 24, 32);
             g.destroy();
         }
@@ -327,11 +341,11 @@
         function updateEnemyHpBar() {
             if (!enemyHpBar || !enemySprite || !activeEnemy) return;
             enemyHpBar.clear();
-            enemyHpBar.fillStyle(0x000000, 0.7);
-            enemyHpBar.fillRect(enemySprite.x - 22, enemySprite.y - 24, 44, 5);
+            enemyHpBar.fillStyle(0x000000, 0.8);
+            enemyHpBar.fillRect(enemySprite.x - 22, enemySprite.y - 28, 44, 6);
             let pct = Math.max(0, activeEnemy.currentHp / activeEnemy.maxHp);
             enemyHpBar.fillStyle(pct > 0.4 ? 0x00ff00 : 0xff0000, 1);
-            enemyHpBar.fillRect(enemySprite.x - 22, enemySprite.y - 24, 44 * pct, 5);
+            enemyHpBar.fillRect(enemySprite.x - 22, enemySprite.y - 28, 44 * pct, 6);
         }
 
         function setupDpadButton(id, direction) {
@@ -346,9 +360,8 @@
         function update() {
             if (!trainer) return;
             trainer.setVelocity(0);
-            let speed = 110;
+            let speed = 120;
 
-            // Movimiento diagonal isométrico estilizado
             if (cursors.left.isDown || moveState.left) { trainer.setVelocityX(-speed); trainer.setVelocityY(speed/2); }
             else if (cursors.right.isDown || moveState.right) { trainer.setVelocityX(speed); trainer.setVelocityY(-speed/2); }
             if (cursors.up.isDown || moveState.up) { trainer.setVelocityX(-speed); trainer.setVelocityY(-speed/2); }
@@ -356,30 +369,71 @@
 
             if (petPokemon && trainer) {
                 petPokemon.x = Phaser.Math.Linear(petPokemon.x, trainer.x - 25, 0.1);
-                petPokemon.y = Phaser.Math.Linear(petPokemon.y, trainer.y + 10, 0.1);
+                petPokemon.y = Phaser.Math.Linear(petPokemon.y, trainer.y + 12, 0.1);
             }
             if (enemySprite) updateEnemyHpBar();
         }
 
+        // Efectos visuales de ataques y proyectiles en pantalla
         function castSpell(type) {
             let now = Date.now();
             if (now - lastAttackTime < 700) return;
             lastAttackTime = now;
-            let activePoke = playerData.team[playerData.activePokeIndex];
-            let dmg = type === 'heavy' ? 45 : 25;
-            activeEnemy.currentHp = Math.max(0, activeEnemy.currentHp - dmg);
-            updateEnemyHpBar();
 
-            if (activeEnemy.currentHp <= 0) {
-                playerData.coins += 100;
-                activeEnemy.currentHp = activeEnemy.maxHp;
-                alert("🎉 ¡Derrotaste al Pokémon en la cuadrícula isométrica!");
-            }
-            updateUI();
+            if (!sceneContext || !petPokemon || !enemySprite) return;
+
+            let color = type === 'heavy' ? 0xff3300 : 0xffea00;
+            let size = type === 'heavy' ? 10 : 7;
+
+            // Proyectil viajando hacia el enemigo
+            let projectile = sceneContext.add.circle(petPokemon.x, petPokemon.y, size, color, 1);
+            sceneContext.tweens.add({
+                targets: projectile,
+                x: enemySprite.x,
+                y: enemySprite.y,
+                duration: 200,
+                onComplete: () => {
+                    projectile.destroy();
+                    // Destello de impacto
+                    let flash = sceneContext.add.circle(enemySprite.x, enemySprite.y, 22, 0xffffff, 0.95);
+                    sceneContext.tweens.add({
+                        targets: flash,
+                        scale: 2.5,
+                        alpha: 0,
+                        duration: 150,
+                        onComplete: () => flash.destroy()
+                    });
+
+                    let dmg = isAdmin ? (type === 'heavy' ? 70 : 40) : (type === 'heavy' ? 45 : 25);
+                    activeEnemy.currentHp = Math.max(0, activeEnemy.currentHp - dmg);
+                    updateEnemyHpBar();
+
+                    if (activeEnemy.currentHp <= 0) {
+                        playerData.coins += 150;
+                        activeEnemy.currentHp = activeEnemy.maxHp;
+                        document.getElementById('battle-log').innerText = `💥 ¡Derrotaste a ${activeEnemy.name}! (+150 PokéDollars)`;
+                        alert("🎉 ¡Victoria en combate isométrico!");
+                    } else {
+                        document.getElementById('battle-log').innerText = `⚡ ¡Ataque certero! HP de ${activeEnemy.name}: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
+                    }
+                    updateUI();
+                }
+            });
         }
 
         function tryCatch() {
-            alert("🔴 ¡Lanzaste Pokéball isométrica con éxito!");
+            if (!sceneContext || !petPokemon || !enemySprite) return;
+            let ball = sceneContext.add.circle(petPokemon.x, petPokemon.y, 8, 0xcc0000, 1);
+            sceneContext.tweens.add({
+                targets: ball,
+                x: enemySprite.x,
+                y: enemySprite.y,
+                duration: 250,
+                onComplete: () => {
+                    ball.destroy();
+                    alert("🔴 ¡Pokéball lanzada con éxito en el mapa 2.5D!");
+                }
+            });
         }
 
         function toggleModal(id) {
@@ -387,10 +441,10 @@
             m.style.display = m.style.display === 'block' ? 'none' : 'block';
         }
 
-        function buyItem(k, q, p) { playerData.coins += 50; updateUI(); alert("🛒 ¡Comprado!"); }
-        function healTeamShop() { playerData.team.forEach(p => p.hp = p.maxHp); updateUI(); alert("🏥 ¡Curado!"); }
-        function sellLoot() { playerData.coins += 200; updateUI(); alert("💰 ¡Vendido!"); }
-        function changeRoute() { alert("🗺️ ¡Cambiando de zona isométrica!"); }
+        function buyItem(k, q, p) { playerData.coins += 100; updateUI(); alert("🛒 ¡Compra realizada!"); }
+        function healTeamShop() { playerData.team.forEach(p => p.hp = p.maxHp); updateUI(); alert("🏥 ¡Equipo curado!"); }
+        function sellLoot() { playerData.coins += 300; updateUI(); alert("💰 ¡Loot vendido!"); }
+        function changeRoute() { alert("🗺️ ¡Viajando a nueva zona isométrica!"); }
         function selectPoke(idx) {
             playerData.activePokeIndex = idx;
             let p = playerData.team[idx];
@@ -398,11 +452,12 @@
             updateUI();
         }
         function sendChatMessage() {
-            let txt = document.getElementById('chat-input').value;
+            let txt = document.getElementById('chat-input').value.trim();
             if(!txt) return;
             let box = document.getElementById('chat-messages');
             box.innerHTML += `<div style="color:#00ffff;">[Global] 👑 chuodz: ${txt}</div>`;
             document.getElementById('chat-input').value = '';
+            box.scrollTop = box.scrollHeight;
         }
 
         function updateUI() {
@@ -410,9 +465,12 @@
             let html = "";
             playerData.team.forEach((p, i) => {
                 let act = i === playerData.activePokeIndex ? "active" : "";
+                let pct = (p.hp / p.maxHp) * 100;
                 html += `<div class="poke-slot ${act}" onclick="selectPoke(${i})">
                     <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png">
-                    <b>${p.name}</b> (Lv.${p.level})<br>${p.hp}/${p.maxHp} HP
+                    <b>${p.name}</b> (Lv.${p.level})<br>
+                    <div class="bar-bg"><div class="bar-fill hp-fill" style="width:${pct}%"></div></div>
+                    ${p.hp}/${p.maxHp} HP
                 </div>`;
             });
             document.getElementById('team-container').innerHTML = html;
