@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia MMO - Ultra Stable Edition</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <title>PokeTibia MMO - Ultra Stable Retro Edition</title>
     <style>
         body { 
             margin: 0; 
@@ -24,21 +23,34 @@
             box-sizing: border-box;
         }
         p { margin: 2px 0; font-size: 10px; }
-        .bar-bg { width: 100%; background: #444; height: 5px; border-radius: 4px; overflow: hidden; margin: 1px 0; }
+        .bar-bg { width: 100%; background: #444; height: 6px; border-radius: 4px; overflow: hidden; margin: 2px 0; }
         .bar-fill { height: 100%; background: #3b4cca; width: 0%; transition: width 0.3s; }
         .hp-fill { background: #28a745; }
         
-        #game-container { 
+        #game-arena { 
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: space-around;
             align-items: center;
             border: 2px solid #ffcb05; 
             border-radius: 6px; 
-            overflow: hidden; 
             margin: 2px auto;
             width: 360px;
-            height: 170px;
-            background: #38863b;
+            height: 150px;
+            background: linear-gradient(to bottom, #2b580c, #488c14);
+            position: relative;
+            box-sizing: border-box;
+            padding: 8px;
+        }
+
+        .battle-card {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #ffcb05;
+            border-radius: 6px;
+            padding: 4px;
+            width: 85%;
+            font-size: 9px;
+            text-align: left;
         }
 
         .team-bar {
@@ -59,7 +71,6 @@
             font-size: 9px;
         }
         .poke-slot.active { border-color: #ffcb05; background: #443c15; }
-        .poke-slot img { width: 30px; height: 30px; display: block; margin: 0 auto; }
 
         .dpad-container {
             margin-top: 2px;
@@ -78,7 +89,7 @@
             user-select: none;
         }
         .dpad-btn { width: 34px; height: 34px; font-size: 12px; margin: 1px; }
-        .action-btn { width: 31%; padding: 3px; margin-top: 2px; font-size: 9px; display: inline-block; }
+        .action-btn { width: 31%; padding: 4px; margin-top: 2px; font-size: 9px; display: inline-block; }
         .menu-btn { width: 23%; padding: 4px; margin: 1px; font-size: 8px; background: #3b4cca; display: inline-block; }
         .btn-green { background: #28a745; }
         .btn-blue { background: #3b4cca; }
@@ -145,10 +156,22 @@
         <!-- EQUIPO ACTIVO -->
         <div id="team-container" class="team-bar"></div>
         
-        <!-- CONTENEDOR DEL JUEGO -->
-        <div id="game-container"></div>
+        <!-- ARENA DE COMBATE RETRO ESTABLE -->
+        <div id="game-arena">
+            <div class="battle-card" id="enemy-card">
+                <b> enemigo: <span id="e-name">Cargando...</span></b> [Lv.<span id="e-lvl">1</span>] <span id="e-rarity" style="color:#ffcb05;"></span>
+                <div class="bar-bg"><div class="bar-fill hp-fill" id="e-hp-bar" style="width: 100%;"></div></div>
+                <span id="e-hp-text">HP: 100/100</span>
+            </div>
+            
+            <div class="battle-card" id="player-battle-card" style="align-self: flex-end;">
+                <b> aliado: <span id="p-name">Pikachu</span></b> [Lv.<span id="p-lvl">50</span>]
+                <div class="bar-bg"><div class="bar-fill hp-fill" id="p-hp-bar" style="width: 100%;"></div></div>
+                <span id="p-hp-text">HP: 800/800</span>
+            </div>
+        </div>
 
-        <p id="battle-log">¡Combate MMO activo y renderizado con éxito!</p>
+        <p id="battle-log">¡Combate MMO táctico activo!</p>
         
         <!-- BARRA DE ACCIONES -->
         <div>
@@ -169,11 +192,11 @@
 
         <!-- D-PAD TÁCTIL -->
         <div class="dpad-container">
-            <button class="dpad-btn" id="btn-up">⬆️</button>
+            <button class="dpad-btn" id="btn-up" onclick="moveAction('Arriba')">⬆️</button>
             <div class="dpad-row">
-                <button class="dpad-btn" id="btn-left">⬅️</button>
-                <button class="dpad-btn" id="btn-down">⬇️</button>
-                <button class="dpad-btn" id="btn-right">➡️</button>
+                <button class="dpad-btn" id="btn-left" onclick="moveAction('Izquierda')">⬅️</button>
+                <button class="dpad-btn" id="btn-down" onclick="moveAction('Abajo')">⬇️</button>
+                <button class="dpad-btn" id="btn-right" onclick="moveAction('Derecha')">➡️</button>
             </div>
         </div>
 
@@ -226,4 +249,11 @@
         <div style="display:flex;">
             <input type="text" id="chat-input" placeholder="Mensaje..." style="flex:1; background:#222; color:#fff; border:1px solid #555; padding:3px; font-size:9px; border-radius:3px;">
             <button onclick="sendChatMessage()" style="background:#3b4cca; color:#fff; border:none; padding:3px 6px; font-size:9px; cursor:pointer; border-radius:3px; margin-left:3px;">Enviar</button>
-        
+        </div>
+    </div>
+
+    <script>
+        const pokemonNames = {
+            1: "Bulbasaur", 2: "Ivysaur", 3: "Venusaur",
+            4: "Charmander", 5: "Charmeleon", 6: "Charizard",
+            7: "Squirtle", 8: "Wartortle", 9: "Blastoise",
