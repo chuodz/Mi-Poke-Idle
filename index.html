@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2D Master</title>
+    <title>PokeTibia 2D MMORPG</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -37,7 +37,7 @@
             overflow: hidden; 
             margin: 4px auto;
             width: 360px;
-            height: 180px;
+            height: 190px;
             background: #2d4d2d;
         }
 
@@ -114,10 +114,10 @@
         <p id="battle-log">¡Muévete y combate contra los enemigos!</p>
         
         <div>
-            <button class="action-btn btn-green" onclick="triggerAttack()">⚡ Atacar</button>
-            <button class="action-btn btn-green" onclick="tryCatch()">🔴 Capturar</button>
+            <button class="action-btn btn-green" onclick="triggerAttack()">⚡ Atacar Target</button>
+            <button class="action-btn btn-green" onclick="tryCatch()">🔴 Lanzar Pokéball</button>
         </div>
-        <button class="action-btn btn-blue" style="width:100%;" onclick="changeRoute()">🗺️ Cambiar Zona (<span id="zone-name">Ruta 1</span>)</button>
+        <button class="action-btn btn-blue" style="width:100%;" onclick="changeRoute()">🗺️ Cambiar Mapa (<span id="zone-name">Ruta 1 - Pradera</span>)</button>
 
         <!-- CONTROLES TÁCTILES D-PAD -->
         <div class="dpad-container">
@@ -160,9 +160,9 @@
         };
 
         const routes = [
-            { name: "Ruta 1", bg: 0x2e5a1c },
-            { name: "Bosque Verde", bg: 0x183b0d },
-            { name: "Cueva Oscura", bg: 0x222222 }
+            { name: "Ruta 1 - Pradera", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25, pathColor: 0x8b5a2b },
+            { name: "Bosque Verde", bg: 0x183b0d, treeColor: 0x0a1a05, grassColor: 0x245413, pathColor: 0x5c3a1e },
+            { name: "Cueva Oscura", bg: 0x222222, treeColor: 0x111111, grassColor: 0x444444, pathColor: 0x666666 }
         ];
 
         const allPokemonSpecies = [
@@ -181,7 +181,7 @@
         const config = {
             type: Phaser.AUTO,
             width: 360,
-            height: 180,
+            height: 190,
             parent: 'game-container',
             backgroundColor: routes[0].bg,
             physics: {
@@ -197,7 +197,8 @@
 
         const game = new Phaser.Game(config);
         let sceneContext;
-        let player;
+        let trainer;
+        let petPokemon;
         let cursors;
         let moveState = { left: false, right: false, up: false, down: false };
 
@@ -211,10 +212,20 @@
         function create() {
             sceneContext = this;
 
+            // Generar textura nativa en canvas para el Entrenador humano (Estilo Tibia)
+            createTrainerTexture(this);
+
+            // Dibujar Mapa
+            drawMapDecoration(this, routes[0]);
+
+            // Entrenador Humano
+            trainer = this.physics.add.sprite(90, 95, 'trainer_sprite');
+            trainer.setCollideWorldBounds(true);
+
+            // Pokémon Acompañante
             let activePoke = playerData.team[playerData.activePokeIndex];
-            player = this.physics.add.sprite(90, 90, `poke${activePoke.id}`);
-            player.setCollideWorldBounds(true);
-            player.setScale(1.1);
+            petPokemon = this.physics.add.sprite(65, 95, `poke${activePoke.id}`);
+            petPokemon.setScale(0.9);
 
             cursors = this.input.keyboard.createCursorKeys();
 
@@ -227,12 +238,51 @@
             updateUI();
         }
 
+        function createTrainerTexture(scene) {
+            if (scene.textures.exists('trainer_sprite')) return;
+            
+            let g = scene.add.graphics();
+            // Cuerpo del entrenador
+            g.fillStyle(0x3366cc, 1); g.fillRect(6, 12, 12, 12); // Camisa azul
+            g.fillStyle(0x333333, 1); g.fillRect(7, 24, 10, 8);  // Pantalón
+            g.fillStyle(0xffcc99, 1); g.fillCircle(12, 8, 6);   // Cabeza
+            g.fillStyle(0xcc0000, 1); g.fillRect(6, 2, 12, 4);   // Gorra roja
+            
+            g.generateTexture('trainer_sprite', 24, 32);
+            g.destroy();
+        }
+
+        function drawMapDecoration(scene, route) {
+            let graphics = scene.add.graphics();
+            
+            // Senderos de tierra estilo Tibia
+            graphics.fillStyle(route.pathColor, 1);
+            graphics.fillRect(0, 85, 360, 25);
+            graphics.fillRect(160, 0, 25, 190);
+
+            // Zonas de césped alto (parches)
+            graphics.fillStyle(route.grassColor, 1);
+            graphics.fillRect(20, 20, 80, 50);
+            graphics.fillRect(240, 120, 80, 50);
+
+            // Bordes de árboles
+            graphics.fillStyle(route.treeColor, 1);
+            for(let x = 12; x <= 348; x += 24) {
+                graphics.fillCircle(x, 10, 14);
+                graphics.fillCircle(x, 180, 14);
+            }
+            for(let y = 12; y <= 180; y += 24) {
+                graphics.fillCircle(10, y, 14);
+                graphics.fillCircle(350, y, 14);
+            }
+        }
+
         function spawnEnemyInMap(scene) {
             if (enemySprite) enemySprite.destroy();
             if (enemyHpBar) enemyHpBar.destroy();
 
             let randomPoke = allPokemonSpecies[Math.floor(Math.random() * allPokemonSpecies.length)];
-            let randomX = Math.floor(Math.random() * 120) + 190;
+            let randomX = Math.floor(Math.random() * 100) + 210;
             let randomY = Math.floor(Math.random() * 80) + 50;
 
             activeEnemy = { ...randomPoke, currentHp: randomPoke.hp, maxHp: randomPoke.hp };
@@ -249,7 +299,7 @@
             enemyHpBar = scene.add.graphics();
             updateEnemyHpBar();
 
-            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} salvaje apareció!`;
+            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} salvaje emergió del mapa!`;
             updateUI();
         }
 
@@ -274,15 +324,21 @@
         }
 
         function update() {
-            if (!player) return;
-            player.setVelocity(0);
-            let speed = 130;
+            if (!trainer) return;
+            trainer.setVelocity(0);
+            let speed = 120;
 
-            if (cursors.left.isDown || moveState.left) { player.setVelocityX(-speed); }
-            else if (cursors.right.isDown || moveState.right) { player.setVelocityX(speed); }
+            if (cursors.left.isDown || moveState.left) { trainer.setVelocityX(-speed); }
+            else if (cursors.right.isDown || moveState.right) { trainer.setVelocityX(speed); }
 
-            if (cursors.up.isDown || moveState.up) { player.setVelocityY(-speed); }
-            else if (cursors.down.isDown || moveState.down) { player.setVelocityY(speed); }
+            if (cursors.up.isDown || moveState.up) { trainer.setVelocityY(-speed); }
+            else if (cursors.down.isDown || moveState.down) { trainer.setVelocityY(speed); }
+
+            // El Pokémon compañero sigue al entrenador
+            if (petPokemon && trainer) {
+                petPokemon.x = Phaser.Math.Linear(petPokemon.x, trainer.x - 22, 0.1);
+                petPokemon.y = Phaser.Math.Linear(petPokemon.y, trainer.y, 0.1);
+            }
 
             if (enemySprite && activeEnemy) {
                 updateEnemyHpBar();
@@ -320,7 +376,7 @@
                         activePoke.id = activePoke.evoId;
                         activePoke.name = activePoke.evoName;
                         activePoke.evoId = null;
-                        if (player) player.setTexture(`poke${activePoke.id}`);
+                        if (petPokemon) petPokemon.setTexture(`poke${activePoke.id}`);
                     }
                 }
 
@@ -383,8 +439,8 @@
             }
             playerData.activePokeIndex = index;
             let activePoke = playerData.team[index];
-            if (player && sceneContext) {
-                player.setTexture(`poke${activePoke.id}`);
+            if (petPokemon && sceneContext) {
+                petPokemon.setTexture(`poke${activePoke.id}`);
             }
             updateUI();
         }
@@ -443,6 +499,18 @@
             document.getElementById('zone-name').innerText = r.name;
             if (sceneContext) {
                 sceneContext.cameras.main.setBackgroundColor(r.bg);
+                sceneContext.children.removeAll();
+                
+                drawMapDecoration(sceneContext, r);
+
+                let activePoke = playerData.team[playerData.activePokeIndex];
+                
+                trainer = sceneContext.physics.add.sprite(90, 95, 'trainer_sprite');
+                trainer.setCollideWorldBounds(true);
+
+                petPokemon = sceneContext.physics.add.sprite(65, 95, `poke${activePoke.id}`);
+                petPokemon.setScale(0.9);
+
                 spawnEnemyInMap(sceneContext);
             }
         }
