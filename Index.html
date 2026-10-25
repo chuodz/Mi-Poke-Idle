@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Poke Idle Web</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1a1a1a; color: #fff; text-align: center; margin: 0; padding: 20px; }
+        .card { background: #2a2a2a; border: 2px solid #ffcb05; padding: 20px; display: inline-block; border-radius: 10px; margin: 10px; width: 90%; max-width: 350px; box-sizing: border-box; }
+        button { padding: 12px 20px; background: #e3350d; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 16px; width: 100%; margin-top: 10px; }
+        button:hover { background: #b32305; }
+        .hp-bar { width: 100%; background: #555; height: 20px; border-radius: 5px; overflow: hidden; margin: 10px 0; }
+        .hp-fill { height: 100%; background: #4caf50; width: 100%; transition: width 0.2s; }
+        h1 { color: #ffcb05; font-size: 24px; }
+    </style>
+</head>
+<body>
+
+    <h1>Poke Idle: Edición Web</h1>
+
+    <div class="card">
+        <h2 id="enemy-name">Pikachu Salvaje</h2>
+        <div class="hp-bar"><div id="enemy-hp" class="hp-fill"></div></div>
+        <p>HP: <span id="hp-text">100/100</span></p>
+        <button onclick="attackEnemy()">¡Atacar Manual!</button>
+    </div>
+
+    <div class="card">
+        <h3>Tu Progreso</h3>
+        <p>PokéDollars: $<span id="coins">0</span></p>
+        <p>Daño Automático (DPS): <span id="dps">5</span> /seg</p>
+        <button onclick="buyUpgrade()">Mejorar Daño ($<span id="upgrade-cost">10</span>)</button>
+    </div>
+
+    <script>
+        let player = {
+            coins: 0,
+            dps: 5,
+            upgradeCost: 10
+        };
+
+        let enemy = {
+            name: "Pikachu Salvaje",
+            maxHp: 100,
+            hp: 100,
+            reward: 5
+        };
+
+        function updateUI() {
+            document.getElementById('enemy-name').innerText = enemy.name;
+            document.getElementById('hp-text').innerText = `${Math.max(0, enemy.hp)} / ${enemy.maxHp}`;
+            let hpPercent = (enemy.hp / enemy.maxHp) * 100;
+            document.getElementById('enemy-hp').style.width = `${Math.max(0, hpPercent)}%`;
+            document.getElementById('coins').innerText = player.coins;
+            document.getElementById('dps').innerText = player.dps;
+            document.getElementById('upgrade-cost').innerText = player.upgradeCost;
+        }
+
+        function attackEnemy() {
+            enemy.hp -= 10;
+            if (enemy.hp <= 0) {
+                defeatEnemy();
+            }
+            updateUI();
+        }
+
+        function defeatEnemy() {
+            player.coins += enemy.reward;
+            enemy.maxHp = Math.floor(enemy.maxHp * 1.15);
+            enemy.hp = enemy.maxHp;
+            enemy.reward = Math.floor(enemy.reward * 1.15);
+            saveGame();
+        }
+
+        function buyUpgrade() {
+            if (player.coins >= player.upgradeCost) {
+                player.coins -= player.upgradeCost;
+                player.dps += 5;
+                player.upgradeCost = Math.floor(player.upgradeCost * 1.4);
+                updateUI();
+            } else {
+                alert("¡No tienes suficientes PokéDollars!");
+            }
+        }
+
+        // Bucle automático de combate (Idle)
+        setInterval(() => {
+            if (enemy.hp > 0) {
+                enemy.hp -= player.dps / 2; // Reduce gradualmente
+                if (enemy.hp <= 0) {
+                    defeatEnemy();
+                }
+                updateUI();
+            }
+        }, 500);
+
+        function saveGame() {
+            localStorage.setItem('pokeIdleSave', JSON.stringify({ player, enemy }));
+        }
+
+        function loadGame() {
+            let saved = localStorage.getItem('pokeIdleSave');
+            if (saved) {
+                let data = JSON.parse(saved);
+                player = data.player;
+                enemy = data.enemy;
+            }
+            updateUI();
+        }
+
+        loadGame();
+    </script>
+</body>
+</html>
