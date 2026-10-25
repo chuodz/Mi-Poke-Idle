@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia 2D MMORPG Online - Fixed</title>
+    <title>PokeTibia 2D MMORPG Online - Final Expansion</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { 
@@ -91,7 +91,7 @@
             margin-top: 3px;
             font-size: 10px;
             text-align: left;
-            max-height: 95px;
+            max-height: 105px;
             overflow-y: auto;
         }
         .shop-btn { padding: 2px 5px; font-size: 9px; background: #ffcb05; color: #000; font-weight: bold; border: none; border-radius: 3px; cursor: pointer; float: right; }
@@ -100,7 +100,7 @@
 <body>
 
     <div class="game-panel">
-        <h1>PokeTibia MMORPG Online</h1>
+        <h1>PokeTibia 2D MMORPG Online</h1>
         <p>🔴 Balls: <b id="pokeballs">5</b> | 💰 $<span id="coins">40</span> | 🟢 Online: <span id="online-players">1</span> | <span id="depot-status" style="color:#28a745;">Depot: Seguro</span></p>
 
         <!-- EQUIPO ACTIVO -->
@@ -117,7 +117,7 @@
             <button class="action-btn btn-orange" onclick="castSpell('heavy')">🔥 Rayo Fuerte</button>
             <button class="action-btn btn-blue" onclick="tryCatch()">🔴 Pokéball</button>
         </div>
-        <button class="action-btn btn-blue" style="width:100%; margin-top:2px;" onclick="changeRoute()">🗺️ Cambiar Mapa (<span id="zone-name">Ruta 1 - Pradera</span>)</button>
+        <button class="action-btn btn-blue" style="width:100%; margin-top:2px;" onclick="changeRoute()">🗺️ Viajar a: <span id="zone-name">Ruta 1 (Lv.1+)</span></button>
 
         <!-- D-PAD TÁCTIL -->
         <div class="dpad-container">
@@ -134,9 +134,9 @@
             <b>📜 Misión Activa:</b> <span id="quest-text">Cargando misión...</span>
         </div>
 
-        <!-- POKÉDEX Y COLECCIÓN -->
+        <!-- POKÉDEX Y GESTIÓN DE CAJA -->
         <div class="box-section">
-            <b>📖 Pokédex & Caja de Colección:</b>
+            <b>📖 Pokédex & Intercambio de Equipo:</b>
             <div id="pokedex-list" style="margin-top:2px;">Cargando...</div>
         </div>
 
@@ -151,7 +151,6 @@
     </div>
 
     <script>
-        // Mapeo oficial de nombres para la Pokédex
         const pokemonNames = {
             1: "Bulbasaur", 4: "Charmander", 7: "Squirtle", 10: "Caterpie", 16: "Pidgey",
             19: "Rattata", 25: "Pikachu", 26: "Raichu", 39: "Jigglypuff", 52: "Meowth",
@@ -164,7 +163,7 @@
             return pokemonNames[id] || `Pokémon #${id}`;
         }
 
-        let savedData = localStorage.getItem('poketibia_save_v5');
+        let savedData = localStorage.getItem('poketibia_save_v6');
         let playerData = savedData ? JSON.parse(savedData) : {
             coins: 40,
             pokeballs: 5,
@@ -180,7 +179,6 @@
             questLevel: 0
         };
 
-        // Corregir nombres guardados si tenían errores previos
         playerData.team.forEach(p => { p.name = getPokeName(p.id); });
 
         const questGoals = [
@@ -192,21 +190,24 @@
         ];
 
         function saveGame() {
-            localStorage.setItem('poketibia_save_v5', JSON.stringify(playerData));
+            localStorage.setItem('poketibia_save_v6', JSON.stringify(playerData));
         }
 
+        // Mapas con niveles requeridos y dificultad de fuerza aumentada
         const routes = [
-            { name: "Ruta 1 - Pradera", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25, pathColor: 0x8b5a2b },
-            { name: "Bosque Verde", bg: 0x183b0d, treeColor: 0x0a1a05, grassColor: 0x245413, pathColor: 0x5c3a1e },
-            { name: "Cueva Oscura", bg: 0x222222, treeColor: 0x111111, grassColor: 0x444444, pathColor: 0x666666 }
+            { name: "Ruta 1 (Lv.1+)", bg: 0x2e5a1c, treeColor: 0x143308, grassColor: 0x3d7a25, pathColor: 0x8b5a2b, minLevel: 1, maxLevel: 4 },
+            { name: "Bosque Verde (Lv.5+)", bg: 0x183b0d, treeColor: 0x0a1a05, grassColor: 0x245413, pathColor: 0x5c3a1e, minLevel: 5, maxLevel: 10 },
+            { name: "Cueva Oscura (Lv.12+)", bg: 0x222222, treeColor: 0x111111, grassColor: 0x444444, pathColor: 0x666666, minLevel: 12, maxLevel: 22 }
         ];
 
-        const popularIds = [1, 4, 7, 10, 16, 19, 25, 39, 52, 54, 60, 63, 66, 74, 92, 121, 133];
+        const popularIds = [1, 4, 7, 10, 16, 19, 25, 39, 52, 54, 60, 63, 66, 74, 92, 121, 133, 143];
 
         function getRandomPokemon() {
+            let currentRoute = routes[playerData.routeIndex || 0];
+            let enemyLevel = Math.floor(Math.random() * (currentRoute.maxLevel - currentRoute.minLevel + 1)) + currentRoute.minLevel;
             let randomId = popularIds[Math.floor(Math.random() * popularIds.length)];
-            let enemyLevel = Math.floor(Math.random() * 8) + 1;
-            let calculatedHp = Number(35 + (enemyLevel * 8));
+            let calculatedHp = Number(40 + (enemyLevel * 10));
+            
             return {
                 id: randomId,
                 name: getPokeName(randomId),
@@ -214,9 +215,10 @@
                 hp: calculatedHp,
                 currentHp: calculatedHp,
                 maxHp: calculatedHp,
-                atk: Number(12 + (enemyLevel * 3)),
+                // Fuerza aumentada para mayor desafío estilo Tibia
+                atk: Number(15 + (enemyLevel * 4.5)),
                 loot: 'Objeto Raro',
-                price: 15
+                price: 20
             };
         }
 
@@ -260,9 +262,11 @@
 
         function create() {
             sceneContext = this;
+            let currentRoute = routes[playerData.routeIndex || 0];
+            document.getElementById('zone-name').innerText = currentRoute.name;
 
             createTrainerTexture(this);
-            drawMap(this, routes[playerData.routeIndex || 0]);
+            drawMap(this, currentRoute);
 
             trainer = this.physics.add.sprite(90, 95, 'trainer_gfx');
             trainer.setCollideWorldBounds(true);
@@ -340,7 +344,7 @@
             enemyHpBar = scene.add.graphics();
             updateEnemyHpBar();
 
-            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} salvaje (Lv.${activeEnemy.level}) apareció!`;
+            document.getElementById('battle-log').innerText = `⚔️ ¡Un ${activeEnemy.name} (Lv.${activeEnemy.level}) salvaje apareció!`;
             updateUI();
             saveGame();
         }
@@ -349,11 +353,11 @@
             if (!enemyHpBar || !enemySprite || !activeEnemy) return;
             enemyHpBar.clear();
             enemyHpBar.fillStyle(0x000000, 0.7);
-            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 24, 36, 5);
+            enemyHpBar.fillRect(enemySprite.x - 22, enemySprite.y - 24, 44, 5);
 
             let pct = Math.max(0, Number(activeEnemy.currentHp) / Number(activeEnemy.maxHp));
             enemyHpBar.fillStyle(pct > 0.4 ? 0x00ff00 : 0xff0000, 1);
-            enemyHpBar.fillRect(enemySprite.x - 18, enemySprite.y - 24, 36 * pct, 5);
+            enemyHpBar.fillRect(enemySprite.x - 22, enemySprite.y - 24, 44 * pct, 5);
         }
 
         function setupDpadButton(id, direction) {
@@ -427,26 +431,20 @@
             }
         }
 
-        // Proyectil preciso y directo desde el Pokémon hasta el objetivo
         function spawnSpellEffect(type) {
             if (!sceneContext || !petPokemon || !enemySprite) return;
             let color = type === 'heavy' ? 0xff3300 : 0xffea00;
-            let size = type === 'heavy' ? 8 : 5;
+            let size = type === 'heavy' ? 9 : 6;
             
-            let startX = petPokemon.x;
-            let startY = petPokemon.y;
-            let targetX = enemySprite.x;
-            let targetY = enemySprite.y;
-
-            let projectile = sceneContext.add.circle(startX, startY, size, color, 1);
+            let projectile = sceneContext.add.circle(petPokemon.x, petPokemon.y, size, color, 1);
             sceneContext.tweens.add({
                 targets: projectile,
-                x: targetX,
-                y: targetY,
-                duration: 200,
+                x: enemySprite.x,
+                y: enemySprite.y,
+                duration: 180,
                 onComplete: () => {
                     projectile.destroy();
-                    let flash = sceneContext.add.circle(targetX, targetY, 18, 0xffffff, 0.9);
+                    let flash = sceneContext.add.circle(enemySprite.x, enemySprite.y, 18, 0xffffff, 0.95);
                     sceneContext.tweens.add({
                         targets: flash,
                         scale: 2.2,
@@ -485,12 +483,15 @@
             }
 
             activeEnemy.currentHp -= damage;
-            activePoke.hp = Math.max(0, activePoke.hp - 6);
+            
+            // Daño de respuesta del enemigo salvaje (más fuerza)
+            let enemyCounterDmg = Math.floor(activeEnemy.atk * 0.5);
+            activePoke.hp = Math.max(0, activePoke.hp - enemyCounterDmg);
             updateEnemyHpBar();
 
             if (activeEnemy.currentHp <= 0) {
                 playerData.inventory[activeEnemy.loot] = (playerData.inventory[activeEnemy.loot] || 0) + 1;
-                playerData.coins += 15;
+                playerData.coins += 18;
 
                 playerData.questCount++;
                 let currentGoal = questGoals[playerData.questLevel] || questGoals[questGoals.length - 1];
@@ -516,11 +517,11 @@
                     alert(`🎉 ¡Tu ${activePoke.name} subió al Nivel ${activePoke.level}!`);
                 }
 
-                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste a ${activeEnemy.name}!`;
+                document.getElementById('battle-log').innerText = `💥 ¡Derrotaste a ${activeEnemy.name} (Lv.${activeEnemy.level})!`;
                 saveGame();
                 spawnEnemyInMap(sceneContext);
             } else {
-                document.getElementById('battle-log').innerText = `⚡ ${activePoke.name} usó ataque. HP: ${activeEnemy.currentHp}/${activeEnemy.maxHp}`;
+                document.getElementById('battle-log').innerText = `⚡ ${activePoke.name} atacó. Enemigo HP: ${activeEnemy.currentHp}/${activeEnemy.maxHp} (-${enemyCounterDmg} HP tuyo)`;
             }
             updateUI();
         }
@@ -536,7 +537,7 @@
             let hpRatio = activeEnemy.currentHp / activeEnemy.maxHp;
 
             if (hpRatio < 0.6 || Math.random() < 0.5) {
-                alert(`🎉 ¡Atrapaste a ${activeEnemy.name}!`);
+                alert(`🎉 ¡Atrapaste a ${activeEnemy.name} (Lv.${activeEnemy.level})!`);
                 if (playerData.pokedex[activeEnemy.id]) {
                     playerData.pokedex[activeEnemy.id].caught++;
                 }
@@ -556,7 +557,7 @@
                     playerData.team.push(newPoke);
                 } else {
                     playerData.box.push(newPoke);
-                    alert(`📦 Equipo lleno. Enviado a la Caja de Colección.`);
+                    alert(`📦 Equipo lleno. ${activeEnemy.name} fue enviado a la Caja de Colección.`);
                 }
                 saveGame();
                 spawnEnemyInMap(sceneContext);
@@ -580,16 +581,20 @@
             saveGame();
         }
 
-        function sendToTeam(boxIndex) {
-            if (playerData.team.length >= 3) {
-                alert("Tu equipo activo está lleno (máximo 3).");
-                return;
+        // Intercambiar Pokémon de la Caja con el Equipo Activo
+        function swapTeamWithBox(boxIndex) {
+            let boxPoke = playerData.box[boxIndex];
+            let activePoke = playerData.team[playerData.activePokeIndex];
+
+            playerData.box[boxIndex] = activePoke;
+            playerData.team[playerData.activePokeIndex] = boxPoke;
+
+            if (petPokemon && sceneContext) {
+                petPokemon.setTexture(`poke_${boxPoke.id}`);
             }
-            let poke = playerData.box.splice(boxIndex, 1)[0];
-            playerData.team.push(poke);
             updateUI();
             saveGame();
-            alert(`¡${poke.name} se unió al equipo activo!`);
+            alert(`🔄 ¡Intercambiaste a ${activePoke.name} por ${boxPoke.name} en el equipo activo!`);
         }
 
         function healTeam() {
@@ -618,7 +623,7 @@
         function sellLoot() {
             let total = 0;
             for (let item in playerData.inventory) {
-                total += playerData.inventory[item] * 12;
+                total += playerData.inventory[item] * 15;
             }
             if (total > 0) {
                 playerData.coins += total;
@@ -676,16 +681,16 @@
             });
             document.getElementById('team-container').innerHTML = teamHTML;
 
-            let pokedexHTML = "<i>Pokédex Activa</i><br>";
+            let pokedexHTML = "<i>Pokédex & Caja de Colección (Haz clic en Intercambiar para usar en tu grupo)</i><br>";
             for (let id in playerData.pokedex) {
                 let entry = playerData.pokedex[id];
-                pokedexHTML += `<div>✔️ #${String(entry.id).padStart(3, '0')} <b>${getPokeName(entry.id)}</b> | Visto: ${entry.seen} | Atrapado: ${entry.caught}</div>`;
+                pokedexHTML += `<div>✔️ #${String(entry.id).padStart(3, '0')} <b>${getPokeName(entry.id)}</b> | Vistos: ${entry.seen} | Atrapados: ${entry.caught}</div>`;
             }
 
             if (playerData.box && playerData.box.length > 0) {
-                pokedexHTML += `<hr style="border-color:#444; margin:2px 0;"><b>📦 Caja de Colección:</b><br>`;
+                pokedexHTML += `<hr style="border-color:#444; margin:2px 0;"><b>📦 Caja (Intercambiar con Activo):</b><br>`;
                 playerData.box.forEach((bPoke, bIdx) => {
-                    pokedexHTML += `<button onclick="sendToTeam(${bIdx})" style="margin:2px; background:#3b4cca; color:#fff; border:none; padding:2px 5px; border-radius:3px; cursor:pointer;">Sacar a ${getPokeName(bPoke.id)}</button> `;
+                    pokedexHTML += `<div style="margin:2px 0;"><span>${bPoke.name} (Lv.${bPoke.level})</span> <button onclick="swapTeamWithBox(${bIdx})" style="background:#3b4cca; color:#fff; border:none; padding:1px 4px; border-radius:3px; cursor:pointer; font-size:9px;">Intercambiar</button></div>`;
                 });
             }
             document.getElementById('pokedex-list').innerHTML = pokedexHTML;
