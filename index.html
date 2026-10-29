@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTibia MMO - Fixed UI Edition</title>
+    <title>PokeTibia MMO - Ultra Necrozma & Ultraentes Edition</title>
     <style>
         body { 
             margin: 0; 
@@ -40,6 +39,7 @@
             background: linear-gradient(to bottom, #2b580c, #488c14);
             box-sizing: border-box;
             padding: 10px;
+            transition: background 0.5s ease;
         }
 
         .battle-card {
@@ -95,6 +95,7 @@
         .btn-green { background: #28a745; }
         .btn-blue { background: #3b4cca; }
         .btn-orange { background: #d97706; }
+        .btn-purple { background: #8a2be2; }
         .btn-shop { background: #d97706; }
 
         .modal-window {
@@ -185,6 +186,7 @@
             <button class="action-btn btn-blue" onclick="tryCatch()">🔴 Pokéball</button>
         </div>
         <button class="action-btn btn-blue" style="width:100%; margin-top:2px;" onclick="changeRoute()">🗺️ Cambiar de Ruta (+10 Lvls, Máx 1000)</button>
+        <button class="action-btn btn-purple" style="width:100%; margin-top:2px;" onclick="triggerUltraBoss()">🌌 Invocación: Jefe Ultra Necrozma</button>
 
         <!-- BOTONES DE MENÚ -->
         <div style="margin-top:3px;">
@@ -225,7 +227,7 @@
     </div>
 
     <div id="pokedex-modal" class="modal-window">
-        <div class="modal-header"><span>📖 Pokédex Nacional & Rarezas</span><button class="close-btn" onclick="toggleModal('pokedex-modal')">X</button></div>
+        <div class="modal-header"><span>📖 Pokédex Nacional & Ultraentes</span><button class="close-btn" onclick="toggleModal('pokedex-modal')">X</button></div>
         <div id="pokedex-content">Cargando...</div>
     </div>
 
@@ -266,7 +268,10 @@
             25: "Pikachu", 26: "Raichu",
             66: "Machop", 67: "Machoke", 68: "Machamp",
             92: "Gastly", 93: "Haunter", 94: "Gengar",
-            143: "Snorlax", 150: "Mewtwo", 151: "Mew"
+            143: "Snorlax", 150: "Mewtwo", 151: "Mew",
+            // ULTRAENTES Y ULTRA NECROZMA
+            793: "Nihilego", 794: "Buzzwole", 795: "Pheromosa", 796: "Xurkitree", 797: "Celesteela",
+            798: "Kartana", 799: "Guzzlord", 800: "Ultra Necrozma"
         };
 
         const evolutionLines = {
@@ -302,28 +307,67 @@
         };
 
         function spawnEnemy() {
-            let baseIds = [1, 4, 7, 16, 25, 66, 92, 143, 150, 151];
-            let randId = baseIds[Math.floor(Math.random() * baseIds.length)];
-            
             let rRoll = Math.random();
-            let rarity = "Común";
-            if (rRoll < 0.02) rarity = "Shiny";
-            else if (rRoll < 0.10) rarity = "Legendario";
-            else if (rRoll < 0.30) rarity = "Místico";
+            let arena = document.getElementById('game-arena');
+            arena.style.background = 'linear-gradient(to bottom, #2b580c, #488c14)';
 
-            let level = Math.min(1000, playerData.routeLevel + Math.floor(Math.random() * 9));
-            let hp = level * 60;
+            // Probabilidad de Ultraente o Ultra Necrozma salvaje en rutas avanzadas
+            if (playerData.routeLevel >= 30 && rRoll < 0.08) {
+                let ultraIds = [793, 794, 795, 796, 797, 798, 799];
+                let randUltra = ultraIds[Math.floor(Math.random() * ultraIds.length)];
+                let level = Math.min(1000, playerData.routeLevel + 20);
+                let hp = level * 120;
+
+                activeEnemy = {
+                    id: randUltra, name: getPokeName(randUltra), level: level,
+                    hp: hp, currentHp: hp, maxHp: hp, atk: level * 30,
+                    rarity: "Ultraente", shiny: false
+                };
+                arena.style.background = 'linear-gradient(to bottom, #4a00e0, #8e2de2)';
+                document.getElementById('battle-log').innerText = `🌌 ¡Un Ultraumbral se abrió! ¡Apareció el Ultraente ${activeEnemy.name} (Lv.${level})!`;
+            } else {
+                let baseIds = [1, 4, 7, 16, 25, 66, 92, 143, 150, 151];
+                let randId = baseIds[Math.floor(Math.random() * baseIds.length)];
+                
+                let rarity = "Común";
+                if (rRoll < 0.02) rarity = "Shiny";
+                else if (rRoll < 0.10) rarity = "Legendario";
+                else if (rRoll < 0.30) rarity = "Místico";
+
+                let level = Math.min(1000, playerData.routeLevel + Math.floor(Math.random() * 9));
+                let hp = level * 60;
+                
+                activeEnemy = {
+                    id: randId, name: getPokeName(randId), level: level,
+                    hp: hp, currentHp: hp, maxHp: hp, atk: level * 15,
+                    rarity: rarity, shiny: (rarity === "Shiny")
+                };
+                document.getElementById('battle-log').innerText = `⚔️ ¡Apareció un ${activeEnemy.name} [${rarity}] (Lv.${level})!`;
+            }
+
+            if (!playerData.pokedex[activeEnemy.id]) playerData.pokedex[activeEnemy.id] = { seen: 0, caught: 0 };
+            playerData.pokedex[activeEnemy.id].seen++;
+
+            updateUI();
+        }
+
+        function triggerUltraBoss() {
+            let arena = document.getElementById('game-arena');
+            arena.style.background = 'linear-gradient(to bottom, #000000, #434343)';
             
+            let bossLevel = Math.max(100, playerData.routeLevel + 50);
+            let bossHp = bossLevel * 300;
+
             activeEnemy = {
-                id: randId, name: getPokeName(randId), level: level,
-                hp: hp, currentHp: hp, maxHp: hp, atk: level * 15,
-                rarity: rarity, shiny: (rarity === "Shiny")
+                id: 800, name: "Ultra Necrozma", level: bossLevel,
+                hp: bossHp, currentHp: bossHp, maxHp: bossHp, atk: bossLevel * 50,
+                rarity: "Jefe Ultra", shiny: true
             };
 
-            if (!playerData.pokedex[randId]) playerData.pokedex[randId] = { seen: 0, caught: 0 };
-            playerData.pokedex[randId].seen++;
+            if (!playerData.pokedex[800]) playerData.pokedex[800] = { seen: 0, caught: 0 };
+            playerData.pokedex[800].seen++;
 
-            document.getElementById('battle-log').innerText = `⚔️ ¡Apareció un ${activeEnemy.name} [${rarity}] (Lv.${level})!`;
+            document.getElementById('battle-log').innerText = `⚠️ ¡ADVERTENCIA DE JEFE! ¡El devorador de luz Ultra Necrozma ha bajado a combatir!`;
             updateUI();
         }
 
@@ -340,10 +384,10 @@
             activeEnemy.currentHp = Math.max(0, activeEnemy.currentHp - dmg);
 
             if (activeEnemy.currentHp <= 0) {
-                let reward = activeEnemy.shiny ? 5000 : (activeEnemy.rarity === "Legendario" ? 2000 : 300);
+                let reward = activeEnemy.rarity === "Jefe Ultra" ? 25000 : (activeEnemy.rarity === "Ultraente" ? 8000 : (activeEnemy.shiny ? 5000 : (activeEnemy.rarity === "Legendario" ? 2000 : 300)));
                 playerData.coins += reward;
                 
-                activePoke.exp += 150;
+                activePoke.exp += 250;
                 if (activePoke.exp >= activePoke.maxExp && activePoke.level < 1000) {
                     activePoke.exp = 0;
                     activePoke.level++;
@@ -362,7 +406,7 @@
                     }
                 }
 
-                alert(`💥 ¡Derrotaste a ${activeEnemy.name} [${activeEnemy.rarity}]! +$${reward}`);
+                alert(`💥 ¡Derrotaste a ${activeEnemy.name} [${activeEnemy.rarity}]! Recompensa: +$${reward} PokéDollars`);
                 spawnEnemy();
             } else {
                 let eDmg = Math.floor(activeEnemy.atk * 0.15);
@@ -379,7 +423,7 @@
             else if (playerData.pokeballs > 0) { playerData.pokeballs--; ball = "Pokéball"; }
             else { alert("¡No tienes Pokéballs!"); return; }
 
-            let chance = activeEnemy.shiny ? 0.05 : (activeEnemy.rarity === "Legendario" ? 0.20 : 0.60);
+            let chance = activeEnemy.rarity === "Jefe Ultra" ? 0.02 : (activeEnemy.rarity === "Ultraente" ? 0.10 : (activeEnemy.shiny ? 0.05 : (activeEnemy.rarity === "Legendario" ? 0.20 : 0.60)));
             if (ball === "Master Ball" || isAdmin || Math.random() < chance) {
                 alert(`🎉 ¡Atrapaste a ${activeEnemy.name} (${activeEnemy.rarity}) usando ${ball}!`);
                 
@@ -397,7 +441,7 @@
 
                 spawnEnemy();
             } else {
-                alert(`❌ ¡${activeEnemy.name} (${activeEnemy.rarity}) escapó!`);
+                alert(`❌ ¡${activeEnemy.name} (${activeEnemy.rarity}) se liberó de la ${ball}!`);
             }
             updateUI();
         }
@@ -439,7 +483,7 @@
 
         function sellBoxPokemon(index) {
             let p = playerData.box[index];
-            let prices = { "Común": 100, "Místico": 500, "Legendario": 2500, "Shiny": 10000 };
+            let prices = { "Común": 100, "Místico": 500, "Legendario": 2500, "Ultraente": 5000, "Jefe Ultra": 15000, "Shiny": 10000 };
             let val = prices[p.rarity] || 100;
             if (p.shiny) val = 10000;
 
@@ -541,7 +585,7 @@
             playerData.team.forEach((p, i) => {
                 let act = i === playerData.activePokeIndex ? "active" : "";
                 let pct = (p.hp / p.maxHp) * 100;
-                let cardColor = p.shiny ? "#ffd700" : (p.rarity === "Legendario" ? "#ff4444" : (p.rarity === "Místico" ? "#aa44ff" : "#ffffff"));
+                let cardColor = p.shiny ? "#ffd700" : (p.rarity === "Jefe Ultra" ? "#00ffff" : (p.rarity === "Ultraente" ? "#8a2be2" : (p.rarity === "Legendario" ? "#ff4444" : (p.rarity === "Místico" ? "#aa44ff" : "#ffffff"))));
                 html += `<div class="poke-slot ${act}" onclick="selectPoke(${i})" style="border-color:${cardColor};">
                     <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png">
                     <b style="color:${cardColor}">${p.name}</b> (Lv.${p.level})<br>
@@ -551,12 +595,12 @@
             });
             document.getElementById('team-container').innerHTML = html;
 
-            let pDexHTML = "<b>📖 Registro Pokédex Nacional & Estadísticas:</b><br>";
+            let pDexHTML = "<b>📖 Registro Pokédex Nacional & Ultraentes:</b><br>";
             for (let id in pokemonNames) {
                 let data = playerData.pokedex[id] || { seen: 0, caught: 0 };
                 pDexHTML += `<div style="margin:3px 0; background:#252525; padding:3px; border-radius:3px;">` +
                             `<b>#${id} ${pokemonNames[id]}</b> | Vistos: ${data.seen} | Atrapados: ${data.caught}<br>` +
-                            `<span style="color:#ffcb05; font-size:8px;">Evoluciones Automáticas (Lv. 40 y 80)</span></div>`;
+                            `<span style="color:#ffcb05; font-size:8px;">Registro de Especies Registradas</span></div>`;
             }
             document.getElementById('pokedex-content').innerHTML = pDexHTML;
 
@@ -571,7 +615,7 @@
             let boxHTML = "<b>📦 Caja (Intercambiar con Equipo o Vender):</b><br>";
             if (playerData.box.length > 0) {
                 playerData.box.forEach((bPoke, bIdx) => {
-                    let price = bPoke.shiny ? 10000 : (bPoke.rarity === "Legendario" ? 2500 : (bPoke.rarity === "Místico" ? 500 : 100));
+                    let price = bPoke.shiny ? 10000 : (bPoke.rarity === "Jefe Ultra" ? 15000 : (bPoke.rarity === "Ultraente" ? 5000 : (bPoke.rarity === "Legendario" ? 2500 : (bPoke.rarity === "Místico" ? 500 : 100))));
                     boxHTML += `<div style="margin:3px 0; background:#333; padding:4px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">` +
                                `<span><b>${bPoke.name}</b> [${bPoke.rarity}] (Lv.${bPoke.level})</span>` +
                                `<div>` +
